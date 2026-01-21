@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>个人博客系统 - 完整测试版</title>
+    <title>个人博客管理系统</title>
     <style>
         * {
             margin: 0;
@@ -14,56 +14,101 @@
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Microsoft YaHei', sans-serif;
+            background: #f0f2f5;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* 顶部栏 */
+        .topbar {
+            height: 50px;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            padding: 20px;
-        }
-
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-
-        .header {
-            background: white;
-            padding: 20px 30px;
-            border-radius: 15px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-            margin-bottom: 20px;
+            color: white;
             display: flex;
             justify-content: space-between;
             align-items: center;
+            padding: 0 20px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            position: relative;
+            z-index: 100;
         }
 
-        .header h1 {
-            color: #667eea;
-            font-size: 28px;
+        .topbar h1 {
+            font-size: 18px;
+            font-weight: 600;
         }
 
         .user-info {
             display: flex;
             align-items: center;
-            gap: 15px;
+            gap: 12px;
+            font-size: 14px;
         }
 
-        .btn {
-            padding: 10px 20px;
-            border: none;
-            border-radius: 8px;
+        /* 主容器 */
+        .main-container {
+            display: flex;
+            height: calc(100vh - 50px);
+        }
+
+        /* 左侧菜单 */
+        .sidebar {
+            width: 200px;
+            background: #001529;
+            color: white;
+            overflow-y: auto;
+        }
+
+        .menu-item {
+            padding: 14px 20px;
             cursor: pointer;
+            transition: all 0.3s;
+            border-left: 3px solid transparent;
+            display: flex;
+            align-items: center;
+            gap: 8px;
             font-size: 14px;
+        }
+
+        .menu-item:hover {
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .menu-item.active {
+            background: #1890ff;
+            border-left-color: #40a9ff;
+        }
+
+        /* 右侧内容区 */
+        .content-area {
+            flex: 1;
+            background: #fff;
+            margin: 12px;
+            border-radius: 4px;
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+            overflow-y: auto;
+            padding: 20px;
+        }
+
+        /* 按钮样式 */
+        .btn {
+            padding: 6px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 13px;
             font-weight: 500;
             transition: all 0.3s;
+            display: inline-block;
         }
 
         .btn-primary {
-            background: #667eea;
+            background: #1890ff;
             color: white;
         }
 
         .btn-primary:hover {
-            background: #5568d3;
-            transform: translateY(-2px);
+            background: #40a9ff;
         }
 
         .btn-secondary {
@@ -71,270 +116,303 @@
             color: white;
         }
 
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+
         .btn-danger {
-            background: #dc3545;
+            background: #ff4d4f;
             color: white;
         }
 
+        .btn-danger:hover {
+            background: #ff7875;
+        }
+
         .btn-success {
-            background: #28a745;
+            background: #52c41a;
             color: white;
         }
 
         .btn-small {
-            padding: 5px 12px;
+            padding: 4px 10px;
             font-size: 12px;
         }
 
-        .content {
-            background: white;
-            padding: 30px;
-            border-radius: 15px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-            min-height: 500px;
-        }
-
-        .nav-tabs {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 30px;
-            border-bottom: 2px solid #e9ecef;
-            padding-bottom: 10px;
-        }
-
-        .nav-tab {
-            padding: 10px 20px;
-            background: transparent;
-            border: none;
-            cursor: pointer;
-            font-size: 16px;
-            color: #6c757d;
-            transition: all 0.3s;
-            border-bottom: 3px solid transparent;
-        }
-
-        .nav-tab.active {
-            color: #667eea;
-            border-bottom-color: #667eea;
-            font-weight: 600;
-        }
-
+        /* 表单样式 */
         .form-group {
-            margin-bottom: 20px;
+            margin-bottom: 16px;
         }
 
         .form-group label {
             display: block;
-            margin-bottom: 8px;
+            margin-bottom: 6px;
             font-weight: 500;
             color: #333;
+            font-size: 13px;
         }
 
         .form-group input,
         .form-group textarea {
             width: 100%;
-            padding: 12px;
-            border: 2px solid #e9ecef;
-            border-radius: 8px;
-            font-size: 14px;
+            padding: 8px 12px;
+            border: 1px solid #d9d9d9;
+            border-radius: 4px;
+            font-size: 13px;
             transition: border 0.3s;
         }
 
         .form-group input:focus,
         .form-group textarea:focus {
             outline: none;
-            border-color: #667eea;
+            border-color: #40a9ff;
+            box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.1);
         }
 
         .form-group textarea {
-            min-height: 120px;
+            min-height: 100px;
             resize: vertical;
         }
 
+        /* 提示框 */
         .alert {
-            padding: 15px 20px;
-            border-radius: 8px;
-            margin-bottom: 20px;
+            padding: 10px 15px;
+            border-radius: 4px;
+            margin-bottom: 16px;
             display: none;
-            align-items: center;
-            gap: 10px;
+            font-size: 13px;
         }
 
         .alert.show {
-            display: flex;
+            display: block;
         }
 
         .alert-success {
-            background: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
+            background: #f6ffed;
+            color: #52c41a;
+            border: 1px solid #b7eb8f;
         }
 
         .alert-error {
-            background: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
+            background: #fff2f0;
+            color: #ff4d4f;
+            border: 1px solid #ffccc7;
         }
 
+        /* 文章卡片 */
         .post-card {
-            border: 2px solid #e9ecef;
-            border-radius: 12px;
-            padding: 20px;
-            margin-bottom: 20px;
+            border: 1px solid #f0f0f0;
+            border-radius: 4px;
+            padding: 16px;
+            margin-bottom: 12px;
             transition: all 0.3s;
+            background: #fafafa;
         }
 
         .post-card:hover {
-            border-color: #667eea;
-            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.2);
-            transform: translateY(-2px);
+            border-color: #1890ff;
+            box-shadow: 0 2px 8px rgba(24, 144, 255, 0.15);
         }
 
         .post-card h3 {
             color: #333;
-            margin-bottom: 10px;
+            margin-bottom: 8px;
             cursor: pointer;
+            font-size: 15px;
         }
 
         .post-card h3:hover {
-            color: #667eea;
+            color: #1890ff;
         }
 
         .post-meta {
-            color: #6c757d;
-            font-size: 13px;
-            margin-bottom: 15px;
+            color: #8c8c8c;
+            font-size: 12px;
+            margin-bottom: 12px;
         }
 
         .post-content {
             color: #555;
             line-height: 1.6;
-            margin-bottom: 15px;
+            margin-bottom: 12px;
+            font-size: 13px;
         }
 
         .post-actions {
             display: flex;
-            gap: 10px;
+            gap: 8px;
         }
 
+        /* 评论卡片 */
         .comment-card {
-            background: #f8f9fa;
-            padding: 15px;
-            border-radius: 8px;
-            margin-bottom: 15px;
-            border-left: 4px solid #667eea;
+            background: #fafafa;
+            padding: 12px;
+            border-radius: 4px;
+            margin-bottom: 12px;
+            border-left: 3px solid #1890ff;
         }
 
         .comment-meta {
-            color: #6c757d;
+            color: #8c8c8c;
             font-size: 12px;
-            margin-bottom: 8px;
+            margin-bottom: 6px;
         }
 
         .comment-content {
             color: #333;
             line-height: 1.6;
+            font-size: 13px;
+        }
+
+        /* 页面标题 */
+        .page-header {
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .page-header h2 {
+            font-size: 18px;
+            color: #333;
         }
 
         .back-btn {
-            margin-bottom: 20px;
+            margin-bottom: 16px;
         }
 
         .empty-state {
             text-align: center;
-            padding: 60px 20px;
-            color: #6c757d;
-        }
-
-        .config-section {
-            background: #f8f9fa;
-            padding: 20px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-        }
-
-        .config-section h3 {
-            margin-bottom: 15px;
-            color: #333;
-        }
-
-        .test-results {
-            margin-top: 20px;
-            padding: 15px;
-            background: #f8f9fa;
-            border-radius: 8px;
-            max-height: 300px;
-            overflow-y: auto;
-        }
-
-        .test-item {
-            padding: 8px;
-            margin-bottom: 8px;
-            border-radius: 4px;
+            padding: 40px 20px;
+            color: #8c8c8c;
             font-size: 13px;
         }
 
+        /* 配置区域 */
+        .config-section {
+            background: #fafafa;
+            padding: 16px;
+            border-radius: 4px;
+            margin-bottom: 16px;
+            border: 1px solid #f0f0f0;
+        }
+
+        .config-section h3 {
+            margin-bottom: 12px;
+            color: #333;
+            font-size: 15px;
+        }
+
+        .test-results {
+            margin-top: 16px;
+            padding: 12px;
+            background: #fafafa;
+            border-radius: 4px;
+            max-height: 300px;
+            overflow-y: auto;
+            border: 1px solid #f0f0f0;
+        }
+
+        .test-item {
+            padding: 6px;
+            margin-bottom: 6px;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+
         .test-success {
-            background: #d4edda;
-            color: #155724;
+            background: #f6ffed;
+            color: #52c41a;
         }
 
         .test-error {
-            background: #f8d7da;
-            color: #721c24;
+            background: #fff2f0;
+            color: #ff4d4f;
         }
 
         .hidden {
             display: none;
         }
 
+        /* 详情页样式 */
+        .post-detail-header {
+            margin-bottom: 20px;
+        }
+
+        .post-detail-header h2 {
+            font-size: 20px;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .comments-section {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #f0f0f0;
+        }
+
+        .comments-section h3 {
+            font-size: 16px;
+            margin-bottom: 16px;
+        }
+
+        /* 响应式 */
         @media (max-width: 768px) {
-            .header {
-                flex-direction: column;
-                gap: 15px;
+            .sidebar {
+                width: 160px;
             }
 
-            .nav-tabs {
-                flex-wrap: wrap;
+            .topbar h1 {
+                font-size: 16px;
             }
 
-            .post-actions {
-                flex-direction: column;
+            .content-area {
+                margin: 8px;
+                padding: 12px;
             }
         }
     </style>
 </head>
 
 <body>
-    <div class="container">
-        <div class="header">
-            <h1>🚀 个人博客系统</h1>
-            <div class="user-info">
-                <span id="userDisplay"></span>
-                <button id="logoutBtn" class="btn btn-secondary btn-small hidden">退出登录</button>
-            </div>
+    <!-- 顶部栏 -->
+    <div class="topbar">
+        <h1>🚀 个人博客管理系统</h1>
+        <div class="user-info">
+            <span id="userDisplay"></span>
+            <button id="logoutBtn" class="btn btn-secondary btn-small hidden">退出</button>
+        </div>
+    </div>
+
+    <!-- 主容器 -->
+    <div class="main-container">
+        <!-- 左侧菜单 -->
+        <div class="sidebar">
+            <div class="menu-item active" data-page="home">📚 首页</div>
+            <div class="menu-item" data-page="login">🔐 登录</div>
+            <div class="menu-item" data-page="register">📝 注册</div>
+            <div class="menu-item" data-page="myPosts">📖 我的文章</div>
+            <div class="menu-item" data-page="createPost">✏️ 发布文章</div>
+            <div class="menu-item" data-page="test">🧪 API测试</div>
         </div>
 
-        <div id="alertBox" class="alert"></div>
+        <!-- 右侧内容区 -->
+        <div class="content-area">
+            <div id="alertBox" class="alert"></div>
 
-        <div class="content">
-            <div class="nav-tabs">
-                <button class="nav-tab active" data-page="home">首页</button>
-                <button class="nav-tab" data-page="login">登录</button>
-                <button class="nav-tab" data-page="register">注册</button>
-                <button class="nav-tab" data-page="myPosts">我的文章</button>
-                <button class="nav-tab" data-page="createPost">发布文章</button>
-                <button class="nav-tab" data-page="test">API测试</button>
-            </div>
-
+            <!-- 首页 -->
             <div id="homePage" class="page">
-                <h2 style="margin-bottom: 20px;">📚 最新文章</h2>
+                <div class="page-header">
+                    <h2>最新文章</h2>
+                </div>
                 <div id="postsList"></div>
             </div>
 
+            <!-- 登录页 -->
             <div id="loginPage" class="page hidden">
-                <h2 style="margin-bottom: 20px;">🔐 用户登录</h2>
-                <form id="loginForm">
+                <div class="page-header">
+                    <h2>用户登录</h2>
+                </div>
+                <form id="loginForm" style="max-width: 400px;">
                     <div class="form-group">
                         <label>用户名</label>
                         <input type="text" id="loginUsername" required>
@@ -347,9 +425,12 @@
                 </form>
             </div>
 
+            <!-- 注册页 -->
             <div id="registerPage" class="page hidden">
-                <h2 style="margin-bottom: 20px;">📝 用户注册</h2>
-                <form id="registerForm">
+                <div class="page-header">
+                    <h2>用户注册</h2>
+                </div>
+                <form id="registerForm" style="max-width: 400px;">
                     <div class="form-group">
                         <label>用户名</label>
                         <input type="text" id="regUsername" required>
@@ -366,14 +447,20 @@
                 </form>
             </div>
 
+            <!-- 我的文章 -->
             <div id="myPostsPage" class="page hidden">
-                <h2 style="margin-bottom: 20px;">📖 我的文章</h2>
+                <div class="page-header">
+                    <h2>我的文章</h2>
+                </div>
                 <div id="myPostsList"></div>
             </div>
 
+            <!-- 发布文章 -->
             <div id="createPostPage" class="page hidden">
-                <h2 style="margin-bottom: 20px;">✍️ 发布文章</h2>
-                <form id="createPostForm">
+                <div class="page-header">
+                    <h2>发布文章</h2>
+                </div>
+                <form id="createPostForm" style="max-width: 800px;">
                     <div class="form-group">
                         <label>标题</label>
                         <input type="text" id="postTitle" required>
@@ -386,12 +473,13 @@
                 </form>
             </div>
 
+            <!-- 文章详情 -->
             <div id="postDetailPage" class="page hidden">
                 <button class="btn btn-secondary back-btn" onclick="app.showPage('home')">← 返回</button>
                 <div id="postDetail"></div>
-                <div id="commentsSection" style="margin-top: 40px;">
-                    <h3 style="margin-bottom: 20px;">💬 评论区</h3>
-                    <form id="commentForm" class="hidden" style="margin-bottom: 30px;">
+                <div class="comments-section">
+                    <h3>💬 评论区</h3>
+                    <form id="commentForm" class="hidden" style="margin-bottom: 20px;">
                         <div class="form-group">
                             <textarea id="commentContent" placeholder="写下你的评论..." required></textarea>
                         </div>
@@ -401,10 +489,13 @@
                 </div>
             </div>
 
+            <!-- 编辑文章 -->
             <div id="editPostPage" class="page hidden">
                 <button class="btn btn-secondary back-btn" onclick="app.showPage('myPosts')">← 返回</button>
-                <h2 style="margin-bottom: 20px;">✏️ 编辑文章</h2>
-                <form id="editPostForm">
+                <div class="page-header">
+                    <h2>编辑文章</h2>
+                </div>
+                <form id="editPostForm" style="max-width: 800px;">
                     <input type="hidden" id="editPostId">
                     <div class="form-group">
                         <label>标题</label>
@@ -418,8 +509,11 @@
                 </form>
             </div>
 
+            <!-- API测试 -->
             <div id="testPage" class="page hidden">
-                <h2 style="margin-bottom: 20px;">🧪 API测试中心</h2>
+                <div class="page-header">
+                    <h2>API测试中心</h2>
+                </div>
 
                 <div class="config-section">
                     <h3>⚙️ 配置</h3>
@@ -441,7 +535,7 @@
                 </div>
 
                 <div class="test-results" id="testResults">
-                    <p style="color: #6c757d;">测试结果将显示在这里...</p>
+                    <p style="color: #8c8c8c;">测试结果将显示在这里...</p>
                 </div>
             </div>
         </div>
@@ -480,8 +574,8 @@
             bindEvents: function () {
                 var self = this;
 
-                document.querySelectorAll('.nav-tab').forEach(function (tab) {
-                    tab.addEventListener('click', function (e) {
+                document.querySelectorAll('.menu-item').forEach(function (item) {
+                    item.addEventListener('click', function (e) {
                         var page = e.target.dataset.page;
                         self.showPage(page);
                     });
@@ -522,8 +616,8 @@
                 document.querySelectorAll('.page').forEach(function (p) {
                     p.classList.add('hidden');
                 });
-                document.querySelectorAll('.nav-tab').forEach(function (t) {
-                    t.classList.remove('active');
+                document.querySelectorAll('.menu-item').forEach(function (m) {
+                    m.classList.remove('active');
                 });
 
                 var pageMap = {
@@ -538,8 +632,8 @@
                 var pageId = pageMap[page];
                 if (pageId) {
                     document.getElementById(pageId).classList.remove('hidden');
-                    var tab = document.querySelector('[data-page="' + page + '"]');
-                    if (tab) tab.classList.add('active');
+                    var menuItem = document.querySelector('[data-page="' + page + '"]');
+                    if (menuItem) menuItem.classList.add('active');
                 }
 
                 if (page === 'myPosts') {
@@ -606,7 +700,7 @@
                             self.token = data.data.token;
                             localStorage.setItem('token', self.token);
                             self.fetchProfile();
-                            self.showAlert('success', '登录成功！');
+                            self.showAlert('success', '登录成功!');
                             self.showPage('home');
                             document.getElementById('loginForm').reset();
                         } else {
@@ -632,7 +726,7 @@
                     .then(function (res) { return res.json(); })
                     .then(function (data) {
                         if (data.code === 200) {
-                            self.showAlert('success', '注册成功！请登录');
+                            self.showAlert('success', '注册成功!请登录');
                             self.showPage('login');
                             document.getElementById('registerForm').reset();
                         } else {
@@ -696,7 +790,7 @@
                 var container = document.getElementById(containerId);
 
                 if (!posts || posts.length === 0) {
-                    container.innerHTML = '<div class="empty-state"><div style="font-size: 48px;">📭</div><p>暂无文章</p></div>';
+                    container.innerHTML = '<div class="empty-state"><div style="font-size: 40px;">📭</div><p>暂无文章</p></div>';
                     return;
                 }
 
@@ -741,8 +835,8 @@
 
             renderPostDetail: function (post) {
                 var container = document.getElementById('postDetail');
-                container.innerHTML = '<h2 style="margin-bottom: 15px;">' + post.title + '</h2>' +
-                    '<div class="post-meta" style="margin-bottom: 25px;">👤 ' + (post.user ? post.user.username : '未知') + ' | 📅 ' + new Date(post.CreatedAt).toLocaleString('zh-CN') + '</div>' +
+                container.innerHTML = '<div class="post-detail-header"><h2>' + post.title + '</h2>' +
+                    '<div class="post-meta">👤 ' + (post.user ? post.user.username : '未知') + ' | 📅 ' + new Date(post.CreatedAt).toLocaleString('zh-CN') + '</div></div>' +
                     '<div class="post-content" style="line-height: 1.8; white-space: pre-wrap;">' + post.content + '</div>';
 
                 var commentForm = document.getElementById('commentForm');
@@ -771,7 +865,7 @@
                 var container = document.getElementById('commentsList');
 
                 if (!comments || comments.length === 0) {
-                    container.innerHTML = '<p style="color: #6c757d; text-align: center;">暂无评论，快来发表第一条评论吧！</p>';
+                    container.innerHTML = '<p style="color: #8c8c8c; text-align: center;">暂无评论,快来发表第一条评论吧!</p>';
                     return;
                 }
 
@@ -804,7 +898,7 @@
                     .then(function (res) { return res.json(); })
                     .then(function (data) {
                         if (data.code === 200) {
-                            self.showAlert('success', '文章发布成功！');
+                            self.showAlert('success', '文章发布成功!');
                             document.getElementById('createPostForm').reset();
                             self.showPage('myPosts');
                         } else {
@@ -853,7 +947,7 @@
                     .then(function (res) { return res.json(); })
                     .then(function (data) {
                         if (data.code === 200) {
-                            self.showAlert('success', '文章更新成功！');
+                            self.showAlert('success', '文章更新成功!');
                             self.showPage('myPosts');
                         } else {
                             self.showAlert('error', data.message || '更新失败');
@@ -866,7 +960,7 @@
 
             deletePost: function (id) {
                 var self = this;
-                if (!confirm('确定要删除这篇文章吗？')) return;
+                if (!confirm('确定要删除这篇文章吗?')) return;
 
                 fetch(this.apiBase + '/posts/' + id, {
                     method: 'DELETE',
@@ -875,7 +969,7 @@
                     .then(function (res) { return res.json(); })
                     .then(function (data) {
                         if (data.code === 200) {
-                            self.showAlert('success', '文章删除成功！');
+                            self.showAlert('success', '文章删除成功!');
                             self.fetchMyPosts();
                         } else {
                             self.showAlert('error', data.message || '删除失败');
@@ -907,7 +1001,7 @@
                     .then(function (res) { return res.json(); })
                     .then(function (data) {
                         if (data.code === 200) {
-                            self.showAlert('success', '评论发表成功！');
+                            self.showAlert('success', '评论发表成功!');
                             document.getElementById('commentContent').value = '';
                             self.fetchComments(postId);
                         } else {
@@ -928,7 +1022,7 @@
             },
 
             clearTestResults: function () {
-                document.getElementById('testResults').innerHTML = '<p style="color: #6c757d;">测试结果将显示在这里...</p>';
+                document.getElementById('testResults').innerHTML = '<p style="color: #8c8c8c;">测试结果将显示在这里...</p>';
             },
 
             testHealth: function () {
@@ -938,7 +1032,7 @@
                 fetch('http://localhost:8080/health')
                     .then(function (res) {
                         if (res.ok) {
-                            self.addTestResult('✓ 健康检查通过', true);
+                            self.addTestResult('✔ 健康检查通过', true);
                         } else {
                             self.addTestResult('✗ 健康检查失败', false);
                         }
@@ -966,7 +1060,7 @@
                     .then(function (res) { return res.json(); })
                     .then(function (regData) {
                         if (regData.code === 200) {
-                            self.addTestResult('✓ 注册测试通过', true);
+                            self.addTestResult('✔ 注册测试通过', true);
 
                             return fetch(self.apiBase + '/auth/login', {
                                 method: 'POST',
@@ -984,7 +1078,7 @@
                     .then(function (res) { return res.json(); })
                     .then(function (loginData) {
                         if (loginData.code === 200 && loginData.data.token) {
-                            self.addTestResult('✓ 登录测试通过', true);
+                            self.addTestResult('✔ 登录测试通过', true);
 
                             return fetch(self.apiBase + '/profile', {
                                 headers: { 'Authorization': 'Bearer ' + loginData.data.token }
@@ -997,7 +1091,7 @@
                     .then(function (res) { return res.json(); })
                     .then(function (profileData) {
                         if (profileData.code === 200) {
-                            self.addTestResult('✓ 获取用户信息测试通过', true);
+                            self.addTestResult('✔ 获取用户信息测试通过', true);
                         } else {
                             self.addTestResult('✗ 获取用户信息测试失败', false);
                         }
@@ -1034,7 +1128,7 @@
                     .then(function (res) { return res.json(); })
                     .then(function (createData) {
                         if (createData.code === 200) {
-                            self.addTestResult('✓ 创建文章测试通过', true);
+                            self.addTestResult('✔ 创建文章测试通过', true);
                             postId = createData.data.ID;
 
                             return fetch(self.apiBase + '/posts/' + postId);
@@ -1046,7 +1140,7 @@
                     .then(function (res) { return res.json(); })
                     .then(function (getData) {
                         if (getData.code === 200) {
-                            self.addTestResult('✓ 获取文章详情测试通过', true);
+                            self.addTestResult('✔ 获取文章详情测试通过', true);
 
                             return fetch(self.apiBase + '/posts/' + postId, {
                                 method: 'PUT',
@@ -1067,7 +1161,7 @@
                     .then(function (res) { return res.json(); })
                     .then(function (updateData) {
                         if (updateData.code === 200) {
-                            self.addTestResult('✓ 更新文章测试通过', true);
+                            self.addTestResult('✔ 更新文章测试通过', true);
 
                             return fetch(self.apiBase + '/posts/' + postId, {
                                 method: 'DELETE',
@@ -1081,7 +1175,7 @@
                     .then(function (res) { return res.json(); })
                     .then(function (deleteData) {
                         if (deleteData.code === 200) {
-                            self.addTestResult('✓ 删除文章测试通过', true);
+                            self.addTestResult('✔ 删除文章测试通过', true);
                         } else {
                             self.addTestResult('✗ 删除文章测试失败', false);
                         }
@@ -1091,7 +1185,7 @@
                     .then(function (res) { return res.json(); })
                     .then(function (listData) {
                         if (listData.code === 200) {
-                            self.addTestResult('✓ 获取文章列表测试通过', true);
+                            self.addTestResult('✔ 获取文章列表测试通过', true);
                         } else {
                             self.addTestResult('✗ 获取文章列表测试失败', false);
                         }
@@ -1145,7 +1239,7 @@
                     .then(function (res) { return res.json(); })
                     .then(function (commentData) {
                         if (commentData.code === 200) {
-                            self.addTestResult('✓ 创建评论测试通过', true);
+                            self.addTestResult('✔ 创建评论测试通过', true);
 
                             return fetch(self.apiBase + '/comments/post/' + postId);
                         } else {
@@ -1156,7 +1250,7 @@
                     .then(function (res) { return res.json(); })
                     .then(function (getCommentsData) {
                         if (getCommentsData.code === 200) {
-                            self.addTestResult('✓ 获取评论列表测试通过', true);
+                            self.addTestResult('✔ 获取评论列表测试通过', true);
                         } else {
                             self.addTestResult('✗ 获取评论列表测试失败', false);
                         }
