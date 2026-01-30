@@ -7,6 +7,25 @@ let authToken = null;
 let currentArticleId = null;
 let currentReplyTo = null;
 
+// ===== 加载动画控制 =====
+function showLoading() {
+    document.getElementById('loadingOverlay').classList.add('show');
+}
+
+function hideLoading() {
+    document.getElementById('loadingOverlay').classList.remove('show');
+}
+
+function setButtonLoading(btn, loading) {
+    if (loading) {
+        btn.classList.add('loading');
+        btn.disabled = true;
+    } else {
+        btn.classList.remove('loading');
+        btn.disabled = false;
+    }
+}
+
 // 初始化应用
 document.addEventListener('DOMContentLoaded', () => {
     // 检查本地存储的认证信息
@@ -79,10 +98,13 @@ function cancelArticleForm() {
 // ===== 认证相关 =====
 async function register(e) {
     e.preventDefault();
-
+    
+    const btn = e.target.querySelector('button[type="submit"]');
     const username = document.getElementById('registerUsername').value;
     const email = document.getElementById('registerEmail').value;
     const password = document.getElementById('registerPassword').value;
+
+    setButtonLoading(btn, true);
 
     try {
         const response = await fetch(`${API_BASE}/register`, {
@@ -101,14 +123,19 @@ async function register(e) {
         }
     } catch (error) {
         showToast('注册失败，请重试', 'error');
+    } finally {
+        setButtonLoading(btn, false);
     }
 }
 
 async function login(e) {
     e.preventDefault();
 
+    const btn = e.target.querySelector('button[type="submit"]');
     const username = document.getElementById('loginUsername').value;
     const password = document.getElementById('loginPassword').value;
+
+    setButtonLoading(btn, true);
 
     try {
         const response = await fetch(`${API_BASE}/login`, {
@@ -135,10 +162,14 @@ async function login(e) {
         }
     } catch (error) {
         showToast('登录失败，请重试', 'error');
+    } finally {
+        setButtonLoading(btn, false);
     }
 }
 
 async function logout() {
+    showLoading();
+    
     try {
         await fetch(`${API_BASE}/logout`, {
             method: 'POST',
@@ -156,6 +187,7 @@ async function logout() {
     updateUIForAuth();
     showToast('已退出登录', 'success');
     showHome();
+    hideLoading();
 }
 
 function updateUIForAuth() {
@@ -168,13 +200,13 @@ function updateUIForAuth() {
     const loginPrompt = document.getElementById('loginPrompt');
 
     if (currentUser) {
-        console.log('Current user role:', currentUser.role);  // 添加调试日志
+        console.log('Current user role:', currentUser.role);
         authButtons.style.display = 'none';
         userMenu.style.display = 'flex';
         document.getElementById('welcomeUser').textContent = `欢迎, ${currentUser.username}`;
 
         if (currentUser.role === 'admin' || currentUser.role === 'author') {
-            createBtn.style.display = 'block';
+            createBtn.style.display = 'inline-flex';
             myArticlesLink.style.display = 'block';
         }
 
@@ -198,6 +230,8 @@ function updateUIForAuth() {
 
 // ===== 文章相关 =====
 async function loadArticles(params = {}) {
+    showLoading();
+    
     try {
         const queryParams = new URLSearchParams(params);
         const response = await fetch(`${API_BASE}/articles?${queryParams}`);
@@ -208,12 +242,16 @@ async function loadArticles(params = {}) {
         }
     } catch (error) {
         showToast('加载文章失败', 'error');
+    } finally {
+        hideLoading();
     }
 }
 
 async function loadMyArticles() {
     if (!currentUser) return;
 
+    showLoading();
+    
     try {
         const response = await fetch(`${API_BASE}/articles`);
         const data = await response.json();
@@ -224,6 +262,8 @@ async function loadMyArticles() {
         }
     } catch (error) {
         showToast('加载文章失败', 'error');
+    } finally {
+        hideLoading();
     }
 }
 
@@ -231,7 +271,14 @@ function displayArticles(articles) {
     const articleList = document.getElementById('articleList');
 
     if (articles.length === 0) {
-        articleList.innerHTML = '<p style="text-align:center;color:#7f8c8d;">暂无文章</p>';
+        articleList.innerHTML = `
+            <div class="card">
+                <div class="empty-state">
+                    <div class="empty-state-icon">📭</div>
+                    <div class="empty-state-text">暂无文章</div>
+                </div>
+            </div>
+        `;
         return;
     }
 
@@ -257,6 +304,7 @@ function displayArticles(articles) {
 
 async function viewArticle(id) {
     currentArticleId = id;
+    showLoading();
 
     try {
         const response = await fetch(`${API_BASE}/articles/${id}`);
@@ -270,6 +318,8 @@ async function viewArticle(id) {
         }
     } catch (error) {
         showToast('加载文章失败', 'error');
+    } finally {
+        hideLoading();
     }
 }
 
@@ -295,10 +345,10 @@ function displayArticleDetail(article) {
         ${article.cover_image ? `<img src="${article.cover_image}" alt="封面">` : ''}
         <div class="article-content" style="white-space: pre-wrap;">${escapeHtml(article.content)}</div>
         <div class="article-actions">
-            ${currentUser ? `<button onclick="likeArticle(${article.id})" class="btn-primary">❤️ 点赞</button>` : ''}
+            ${currentUser ? `<button onclick="likeArticle(${article.id})" class="btn btn-primary btn-sm">❤️ 点赞</button>` : ''}
             ${canEdit ? `
-                <button onclick="editArticle(${article.id})" class="btn-secondary">✏️ 编辑</button>
-                <button onclick="deleteArticle(${article.id})" class="btn-danger">🗑️ 删除</button>
+                <button onclick="editArticle(${article.id})" class="btn btn-secondary btn-sm">✏️ 编辑</button>
+                <button onclick="deleteArticle(${article.id})" class="btn btn-danger btn-sm">🗑️ 删除</button>
             ` : ''}
         </div>
     `;
@@ -307,6 +357,7 @@ function displayArticleDetail(article) {
 async function submitArticle(e) {
     e.preventDefault();
 
+    const btn = e.target.querySelector('button[type="submit"]');
     const id = document.getElementById('articleId').value;
     const title = document.getElementById('articleTitle').value;
     const content = document.getElementById('articleContent').value;
@@ -317,6 +368,8 @@ async function submitArticle(e) {
 
     const method = id ? 'PUT' : 'POST';
     const url = id ? `${API_BASE}/articles/${id}` : `${API_BASE}/articles`;
+
+    setButtonLoading(btn, true);
 
     try {
         const response = await fetch(url, {
@@ -338,10 +391,14 @@ async function submitArticle(e) {
         }
     } catch (error) {
         showToast('操作失败，请重试', 'error');
+    } finally {
+        setButtonLoading(btn, false);
     }
 }
 
 async function editArticle(id) {
+    showLoading();
+    
     try {
         const response = await fetch(`${API_BASE}/articles/${id}`);
         const data = await response.json();
@@ -359,11 +416,15 @@ async function editArticle(id) {
         }
     } catch (error) {
         showToast('加载文章失败', 'error');
+    } finally {
+        hideLoading();
     }
 }
 
 async function deleteArticle(id) {
     if (!confirm('确定要删除这篇文章吗？')) return;
+
+    showLoading();
 
     try {
         const response = await fetch(`${API_BASE}/articles/${id}`, {
@@ -381,6 +442,8 @@ async function deleteArticle(id) {
         }
     } catch (error) {
         showToast('删除失败，请重试', 'error');
+    } finally {
+        hideLoading();
     }
 }
 
@@ -420,7 +483,7 @@ function displayComments(comments) {
     const commentList = document.getElementById('commentList');
 
     if (comments.length === 0) {
-        commentList.innerHTML = '<p style="color:#7f8c8d;">暂无评论</p>';
+        commentList.innerHTML = '<p class="text-muted" style="text-align:center;padding:1rem;">暂无评论，快来发表第一条评论吧！</p>';
         return;
     }
 
@@ -444,7 +507,7 @@ function renderComment(comment) {
                 ${currentUser ? `
                     <button onclick="likeComment(${comment.id})">❤️ ${comment.likes}</button>
                     <button onclick="replyToComment(${comment.id})">💬 回复</button>
-                ` : `<span>❤️ ${comment.likes}</span>`}
+                ` : `<span style="font-size:0.75rem;color:var(--gray-500);">❤️ ${comment.likes}</span>`}
                 ${canDelete ? `<button onclick="deleteComment(${comment.id})">🗑️ 删除</button>` : ''}
             </div>
             ${comment.replies && comment.replies.length > 0 ? `
@@ -458,11 +521,14 @@ function renderComment(comment) {
 
 async function submitComment() {
     const content = document.getElementById('commentContent').value.trim();
+    const btn = document.querySelector('#commentForm button');
 
     if (!content) {
         showToast('请输入评论内容', 'error');
         return;
     }
+
+    setButtonLoading(btn, true);
 
     try {
         const response = await fetch(`${API_BASE}/articles/${currentArticleId}/comments`, {
@@ -489,6 +555,8 @@ async function submitComment() {
         }
     } catch (error) {
         showToast('评论失败，请重试', 'error');
+    } finally {
+        setButtonLoading(btn, false);
     }
 }
 
@@ -500,6 +568,8 @@ function replyToComment(commentId) {
 
 async function deleteComment(id) {
     if (!confirm('确定要删除这条评论吗？')) return;
+
+    showLoading();
 
     try {
         const response = await fetch(`${API_BASE}/comments/${id}`, {
@@ -517,6 +587,8 @@ async function deleteComment(id) {
         }
     } catch (error) {
         showToast('删除失败，请重试', 'error');
+    } finally {
+        hideLoading();
     }
 }
 
@@ -594,6 +666,8 @@ async function performSearch() {
         return;
     }
 
+    showLoading();
+
     try {
         const response = await fetch(`${API_BASE}/search?q=${encodeURIComponent(keyword)}`);
         const data = await response.json();
@@ -603,12 +677,14 @@ async function performSearch() {
         }
     } catch (error) {
         showToast('搜索失败', 'error');
+    } finally {
+        hideLoading();
     }
 }
 
 // ===== 通知 =====
 async function loadNotifications() {
-    if (!currentUser || !authToken) return;  // 添加 authToken 检查
+    if (!currentUser || !authToken) return;
 
     try {
         const response = await fetch(`${API_BASE}/notifications`, {
@@ -629,11 +705,12 @@ async function loadNotifications() {
         }
     } catch (error) {
         console.error('Load notifications error:', error);
-        // 不显示错误提示，避免干扰用户
     }
 }
 
 async function loadNotificationList() {
+    showLoading();
+    
     try {
         const response = await fetch(`${API_BASE}/notifications`, {
             headers: { 'Authorization': `Bearer ${authToken}` }
@@ -646,6 +723,8 @@ async function loadNotificationList() {
         }
     } catch (error) {
         showToast('加载通知失败', 'error');
+    } finally {
+        hideLoading();
     }
 }
 
@@ -653,7 +732,12 @@ function displayNotifications(notifications) {
     const list = document.getElementById('notificationList');
 
     if (notifications.length === 0) {
-        list.innerHTML = '<p style="color:#7f8c8d;">暂无通知</p>';
+        list.innerHTML = `
+            <div class="empty-state">
+                <div class="empty-state-icon">🔔</div>
+                <div class="empty-state-text">暂无通知</div>
+            </div>
+        `;
         return;
     }
 
@@ -684,6 +768,8 @@ async function showAdminUsers() {
     document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
     event.target.classList.add('active');
 
+    showLoading();
+
     try {
         const response = await fetch(`${API_BASE}/admin/users`, {
             headers: { 'Authorization': `Bearer ${authToken}` }
@@ -696,11 +782,23 @@ async function showAdminUsers() {
         }
     } catch (error) {
         showToast('加载用户列表失败', 'error');
+    } finally {
+        hideLoading();
     }
 }
 
 function displayAdminUsers(users) {
     const content = document.getElementById('adminContent');
+
+    if (users.length === 0) {
+        content.innerHTML = `
+            <div class="empty-state">
+                <div class="empty-state-icon">👥</div>
+                <div class="empty-state-text">暂无用户</div>
+            </div>
+        `;
+        return;
+    }
 
     content.innerHTML = `
         <table class="user-table">
@@ -721,7 +819,7 @@ function displayAdminUsers(users) {
                         <td>${escapeHtml(user.username)}</td>
                         <td>${escapeHtml(user.email)}</td>
                         <td>
-                            <select onchange="changeUserRole(${user.id}, this.value)">
+                            <select onchange="changeUserRole(${user.id}, this.value)" class="form-select form-select-sm" style="width:auto;">
                                 <option value="reader" ${user.role === 'reader' ? 'selected' : ''}>读者</option>
                                 <option value="author" ${user.role === 'author' ? 'selected' : ''}>作者</option>
                                 <option value="admin" ${user.role === 'admin' ? 'selected' : ''}>管理员</option>
@@ -729,7 +827,7 @@ function displayAdminUsers(users) {
                         </td>
                         <td>${formatDate(user.created_at)}</td>
                         <td>
-                            <button onclick="deleteUser(${user.id})" class="btn-danger">删除</button>
+                            <button onclick="deleteUser(${user.id})" class="btn btn-danger btn-sm">删除</button>
                         </td>
                     </tr>
                 `).join('')}
@@ -739,6 +837,8 @@ function displayAdminUsers(users) {
 }
 
 async function changeUserRole(userId, role) {
+    showLoading();
+    
     try {
         const response = await fetch(`${API_BASE}/admin/users/${userId}`, {
             method: 'PUT',
@@ -758,12 +858,42 @@ async function changeUserRole(userId, role) {
         }
     } catch (error) {
         showToast('更新失败', 'error');
+    } finally {
+        hideLoading();
+    }
+}
+
+async function deleteUser(userId) {
+    if (!confirm('确定要删除此用户吗？')) return;
+    
+    showLoading();
+    
+    try {
+        const response = await fetch(`${API_BASE}/admin/users/${userId}`, {
+            method: 'DELETE',
+            headers: { 'Authorization': `Bearer ${authToken}` }
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            showToast('删除成功', 'success');
+            showAdminUsers();
+        } else {
+            showToast(data.message, 'error');
+        }
+    } catch (error) {
+        showToast('删除失败', 'error');
+    } finally {
+        hideLoading();
     }
 }
 
 async function showAdminComments() {
     document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
     event.target.classList.add('active');
+
+    showLoading();
 
     try {
         const response = await fetch(`${API_BASE}/admin/comments/pending`, {
@@ -777,6 +907,8 @@ async function showAdminComments() {
         }
     } catch (error) {
         showToast('加载评论列表失败', 'error');
+    } finally {
+        hideLoading();
     }
 }
 
@@ -784,7 +916,12 @@ function displayAdminComments(comments) {
     const content = document.getElementById('adminContent');
 
     if (comments.length === 0) {
-        content.innerHTML = '<p style="color:#7f8c8d;">暂无待审核评论</p>';
+        content.innerHTML = `
+            <div class="empty-state">
+                <div class="empty-state-icon">💬</div>
+                <div class="empty-state-text">暂无待审核评论</div>
+            </div>
+        `;
         return;
     }
 
@@ -807,8 +944,8 @@ function displayAdminComments(comments) {
                         <td>${escapeHtml(comment.content)}</td>
                         <td>${formatDate(comment.created_at)}</td>
                         <td>
-                            <button onclick="approveComment(${comment.id}, 'approved')" class="btn-primary">通过</button>
-                            <button onclick="approveComment(${comment.id}, 'rejected')" class="btn-danger">拒绝</button>
+                            <button onclick="approveComment(${comment.id}, 'approved')" class="btn btn-primary btn-sm">通过</button>
+                            <button onclick="approveComment(${comment.id}, 'rejected')" class="btn btn-danger btn-sm">拒绝</button>
                         </td>
                     </tr>
                 `).join('')}
@@ -818,6 +955,8 @@ function displayAdminComments(comments) {
 }
 
 async function approveComment(commentId, status) {
+    showLoading();
+    
     try {
         const response = await fetch(`${API_BASE}/admin/comments/${commentId}/approve`, {
             method: 'PUT',
@@ -838,6 +977,8 @@ async function approveComment(commentId, status) {
         }
     } catch (error) {
         showToast('操作失败', 'error');
+    } finally {
+        hideLoading();
     }
 }
 
