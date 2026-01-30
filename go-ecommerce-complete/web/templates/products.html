@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>商品列表 - 电商平台</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container navbar-content">
+            <a href="/" class="navbar-brand">🛒 电商平台</a>
+            <ul class="navbar-menu">
+                <li><a href="/">首页</a></li>
+                <li><a href="/products">商品</a></li>
+            </ul>
+            <div class="navbar-user"></div>
+        </div>
+    </nav>
+
+    <div class="container" style="margin-top: 30px; margin-bottom: 60px;">
+        <div style="display: flex; gap: 30px;">
+            <!-- 左侧筛选栏 -->
+            <div style="flex: 0 0 250px;">
+                <div class="card">
+                    <div class="card-header">筛选条件</div>
+                    <div class="card-body">
+                        <div class="form-group">
+                            <label>搜索</label>
+                            <input type="text" id="searchInput" class="form-control" placeholder="搜索商品">
+                        </div>
+                        <div class="form-group">
+                            <label>分类</label>
+                            <select id="categorySelect" class="form-control">
+                                <option value="">全部分类</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>排序</label>
+                            <select id="sortSelect" class="form-control">
+                                <option value="latest">最新上架</option>
+                                <option value="price_asc">价格从低到高</option>
+                                <option value="price_desc">价格从高到低</option>
+                            </select>
+                        </div>
+                        <button class="btn btn-primary btn-block" onclick="loadProducts(1)">应用筛选</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 右侧商品列表 -->
+            <div style="flex: 1;">
+                <div id="productsGrid" class="products-grid"></div>
+                <div id="pagination" class="pagination"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/js/common.js"></script>
+    <script>
+        let currentPage = 1;
+
+        async function loadCategories() {
+            const data = await request('/api/categories');
+            if (data.success) {
+                const select = document.getElementById('categorySelect');
+                data.categories.forEach(cat => {
+                    const option = document.createElement('option');
+                    option.value = cat.id;
+                    option.textContent = cat.name;
+                    select.appendChild(option);
+                });
+
+                const urlParams = new URLSearchParams(window.location.search);
+                const categoryId = urlParams.get('category');
+                if (categoryId) {
+                    select.value = categoryId;
+                }
+            }
+        }
+
+        async function loadProducts(page = 1) {
+            currentPage = page;
+            const category = document.getElementById('categorySelect').value;
+            const search = document.getElementById('searchInput').value;
+            const sort = document.getElementById('sortSelect').value;
+
+            let url = `/api/products?page=${page}&sort=${sort}`;
+            if (category) url += `&category_id=${category}`;
+            if (search) url += `&search=${encodeURIComponent(search)}`;
+
+            const data = await request(url);
+            if (data.success) {
+                renderProducts(data.products);
+                renderPagination(data.page, data.pages);
+            }
+        }
+
+        function renderProducts(products) {
+            const grid = document.getElementById('productsGrid');
+            if (products.length === 0) {
+                grid.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📦</div><p>暂无商品</p></div>';
+                return;
+            }
+
+            grid.innerHTML = products.map(product => `
+                <div class="product-card" onclick="window.location.href='/product/${product.id}'">
+                    <img src="${product.image_url}" alt="${product.name}" class="product-image">
+                    <div class="product-info">
+                        <div class="product-name" title="${product.name}">${product.name}</div>
+                        <div class="product-price">${formatPrice(product.price)}</div>
+                        <div style="color: #999; font-size: 12px; margin-top: 5px;">库存: ${product.stock}</div>
+                        <button class="btn btn-primary btn-sm btn-block" style="margin-top: 10px;" 
+                                onclick="event.stopPropagation(); addToCart(${product.id})">
+                            加入购物车
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderPagination(page, totalPages) {
+            const pagination = document.getElementById('pagination');
+            if (totalPages <= 1) {
+                pagination.innerHTML = '';
+                return;
+            }
+
+            let html = '';
+            html += `<button onclick="loadProducts(${page - 1})" ${page === 1 ? 'disabled' : ''}>上一页</button>`;
+            
+            for (let i = 1; i <= totalPages; i++) {
+                if (i === 1 || i === totalPages || (i >= page - 2 && i <= page + 2)) {
+                    html += `<button class="${i === page ? 'active' : ''}" onclick="loadProducts(${i})">${i}</button>`;
+                } else if (i === page - 3 || i === page + 3) {
+                    html += '<button disabled>...</button>';
+                }
+            }
+            
+            html += `<button onclick="loadProducts(${page + 1})" ${page === totalPages ? 'disabled' : ''}>下一页</button>`;
+            pagination.innerHTML = html;
+        }
+
+        async function addToCart(productId) {
+            const user = await getCurrentUser();
+            if (!user) {
+                showToast('请先登录', 'warning');
+                setTimeout(() => window.location.href = '/login', 1000);
+                return;
+            }
+
+            const data = await request('/api/cart/add', {
+                method: 'POST',
+                body: JSON.stringify({ product_id: productId, quantity: 1 })
+            });
+
+            if (data.success) {
+                showToast('已添加到购物车', 'success');
+            } else {
+                showToast(data.message, 'danger');
+            }
+        }
+
+        document.getElementById('searchInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') loadProducts(1);
+        });
+
+        document.addEventListener('DOMContentLoaded', () => {
+            loadCategories();
+            loadProducts(1);
+        });
+    </script>
+</body>
+</html>

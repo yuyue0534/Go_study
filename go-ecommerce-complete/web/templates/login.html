@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>用户登录 - 电商平台</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container navbar-content">
+            <a href="/" class="navbar-brand">🛒 电商平台</a>
+            <ul class="navbar-menu">
+                <li><a href="/">首页</a></li>
+                <li><a href="/products">商品</a></li>
+            </ul>
+            <div class="navbar-user"></div>
+        </div>
+    </nav>
+
+    <div class="container" style="max-width: 400px; margin-top: 80px;">
+        <div class="card">
+            <div class="card-header text-center">
+                <h2>用户登录</h2>
+            </div>
+            <div class="card-body">
+                <form id="loginForm">
+                    <div class="form-group">
+                        <label for="username">用户名</label>
+                        <input type="text" id="username" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="password">密码</label>
+                        <input type="password" id="password" class="form-control" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-block">登录</button>
+                </form>
+                <div style="text-align: center; margin-top: 20px;">
+                    <p>还没有账号？<a href="/register">立即注册</a></p>
+                </div>
+                <div style="margin-top: 20px; padding: 15px; background-color: #f8f9fa; border-radius: 5px;">
+                    <p style="margin-bottom: 10px; font-weight: bold;">测试账号：</p>
+                    <p>管理员: admin / admin123</p>
+                    <p>商家: seller1 / seller123</p>
+                    <p>用户: customer1 / customer123</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/js/common.js"></script>
+    <script>
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            
+            const data = await request('/api/login', {
+                method: 'POST',
+                body: JSON.stringify({ username, password })
+            });
+            
+            if (data.success) {
+                showToast('登录成功', 'success');
+                setTimeout(() => {
+                    // 根据用户角色跳转
+                    if (data.user.role === 'admin') {
+                        window.location.href = '/admin';
+                    } else if (data.user.role === 'seller') {
+                        window.location.href = '/seller';
+                    } else {
+                        window.location.href = '/';
+                    }
+                }, 1000);
+            } else {
+                showToast(data.message, 'danger');
+            }
+        });
+    </script>
+</body>
+</html>

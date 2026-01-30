@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>购物车 - 电商平台</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container navbar-content">
+            <a href="/" class="navbar-brand">🛒 电商平台</a>
+            <ul class="navbar-menu">
+                <li><a href="/">首页</a></li>
+                <li><a href="/products">商品</a></li>
+            </ul>
+            <div class="navbar-user"></div>
+        </div>
+    </nav>
+
+    <div class="container" style="margin-top: 30px; margin-bottom: 60px;">
+        <h2 style="margin-bottom: 30px;">购物车</h2>
+        <div id="cartContent"></div>
+        <div id="cartSummary" style="display: none;" class="card mt-20">
+            <div class="card-body">
+                <div class="flex-between">
+                    <div style="font-size: 18px;">
+                        已选 <span id="selectedCount">0</span> 件商品
+                    </div>
+                    <div>
+                        <span style="font-size: 14px; color: #666;">总价：</span>
+                        <span id="totalAmount" style="font-size: 24px; color: var(--primary-color); font-weight: bold;"></span>
+                    </div>
+                </div>
+                <button class="btn btn-primary btn-block mt-20" onclick="checkout()">去结算</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/js/common.js"></script>
+    <script>
+        let cartItems = [];
+
+        async function loadCart() {
+            const data = await request('/api/cart');
+            if (data.success) {
+                cartItems = data.items;
+                renderCart();
+            }
+        }
+
+        function renderCart() {
+            const content = document.getElementById('cartContent');
+            const summary = document.getElementById('cartSummary');
+
+            if (cartItems.length === 0) {
+                content.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">🛒</div>
+                        <p>购物车是空的</p>
+                        <a href="/products" class="btn btn-primary mt-20">去购物</a>
+                    </div>
+                `;
+                summary.style.display = 'none';
+                return;
+            }
+
+            content.innerHTML = `
+                <div class="card">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th><input type="checkbox" id="selectAll" onchange="toggleSelectAll()"></th>
+                                <th>商品</th>
+                                <th>单价</th>
+                                <th>数量</th>
+                                <th>小计</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${cartItems.map(item => `
+                                <tr id="item-${item.id}">
+                                    <td><input type="checkbox" class="item-checkbox" data-id="${item.id}" onchange="updateSummary()"></td>
+                                    <td>
+                                        <div style="display: flex; align-items: center; gap: 15px;">
+                                            <img src="${item.image_url}" alt="${item.name}" style="width: 80px; height: 80px; object-fit: cover; border-radius: 5px;">
+                                            <div>
+                                                <div style="font-weight: 500;">${item.name}</div>
+                                                <div style="color: #999; font-size: 12px;">库存: ${item.stock}</div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>${formatPrice(item.price)}</td>
+                                    <td>
+                                        <input type="number" value="${item.quantity}" min="1" max="${item.stock}" 
+                                               style="width: 80px;" class="form-control"
+                                               onchange="updateQuantity(${item.id}, this.value)">
+                                    </td>
+                                    <td><strong>${formatPrice(item.price * item.quantity)}</strong></td>
+                                    <td>
+                                        <button class="btn btn-sm btn-outline" onclick="removeItem(${item.id})">删除</button>
+                                    </td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+
+            summary.style.display = 'block';
+            updateSummary();
+        }
+
+        function toggleSelectAll() {
+            const selectAll = document.getElementById('selectAll');
+            const checkboxes = document.querySelectorAll('.item-checkbox');
+            checkboxes.forEach(cb => cb.checked = selectAll.checked);
+            updateSummary();
+        }
+
+        function updateSummary() {
+            const checkboxes = document.querySelectorAll('.item-checkbox:checked');
+            let count = 0;
+            let total = 0;
+
+            checkboxes.forEach(cb => {
+                const itemId = parseInt(cb.dataset.id);
+                const item = cartItems.find(i => i.id === itemId);
+                if (item) {
+                    count += item.quantity;
+                    total += item.price * item.quantity;
+                }
+            });
+
+            document.getElementById('selectedCount').textContent = count;
+            document.getElementById('totalAmount').textContent = formatPrice(total);
+        }
+
+        async function updateQuantity(itemId, quantity) {
+            quantity = parseInt(quantity);
+            const item = cartItems.find(i => i.id === itemId);
+            
+            if (quantity < 1 || quantity > item.stock) {
+                showToast('数量超出范围', 'danger');
+                document.querySelector(`#item-${itemId} input[type=number]`).value = item.quantity;
+                return;
+            }
+
+            const data = await request('/api/cart/update', {
+                method: 'POST',
+                body: JSON.stringify({ cart_item_id: itemId, quantity })
+            });
+
+            if (data.success) {
+                item.quantity = quantity;
+                renderCart();
+            } else {
+                showToast(data.message, 'danger');
+            }
+        }
+
+        async function removeItem(itemId) {
+            if (!confirm('确定要删除这件商品吗？')) return;
+
+            const data = await request('/api/cart/remove', {
+                method: 'POST',
+                body: JSON.stringify({ cart_item_id: itemId })
+            });
+
+            if (data.success) {
+                showToast('已删除', 'success');
+                cartItems = cartItems.filter(i => i.id !== itemId);
+                renderCart();
+            }
+        }
+
+        function checkout() {
+            const selected = Array.from(document.querySelectorAll('.item-checkbox:checked'))
+                .map(cb => parseInt(cb.dataset.id));
+
+            if (selected.length === 0) {
+                showToast('请选择要结算的商品', 'warning');
+                return;
+            }
+
+            localStorage.setItem('checkout_items', JSON.stringify(selected));
+            window.location.href = '/checkout';
+        }
+
+        document.addEventListener('DOMContentLoaded', loadCart);
+    </script>
+</body>
+</html>

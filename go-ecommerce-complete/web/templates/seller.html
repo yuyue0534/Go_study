@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>商家中心 - 电商平台</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container navbar-content">
+            <a href="/" class="navbar-brand">🛒 电商平台</a>
+            <div class="navbar-user"></div>
+        </div>
+    </nav>
+
+    <div class="container" style="margin-top: 30px; margin-bottom: 60px;">
+        <h2 style="margin-bottom: 30px;">商家中心</h2>
+        
+        <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+            <button class="btn btn-primary" onclick="showTab('products')">我的商品</button>
+            <button class="btn btn-outline" onclick="showTab('orders')">订单管理</button>
+        </div>
+
+        <div id="productsTab">
+            <div class="card mb-20">
+                <div class="card-header flex-between">
+                    <span>商品列表</span>
+                    <button class="btn btn-sm btn-primary" onclick="showAddProductModal()">+ 添加商品</button>
+                </div>
+                <div class="card-body">
+                    <table class="table" id="productsTable">
+                        <thead>
+                            <tr>
+                                <th>商品名称</th>
+                                <th>价格</th>
+                                <th>库存</th>
+                                <th>状态</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div id="ordersTab" style="display: none;">
+            <div class="card">
+                <div class="card-header">订单列表</div>
+                <div class="card-body" id="ordersSection"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 添加商品模态框 -->
+    <div id="addProductModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span class="modal-title">添加商品</span>
+                <span class="modal-close" onclick="closeAddProductModal()">&times;</span>
+            </div>
+            <form id="addProductForm">
+                <div class="form-group">
+                    <label>商品名称</label>
+                    <input type="text" name="name" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label>商品描述</label>
+                    <textarea name="description" class="form-control" rows="3"></textarea>
+                </div>
+                <div class="form-group">
+                    <label>价格</label>
+                    <input type="number" name="price" class="form-control" step="0.01" min="0" required>
+                </div>
+                <div class="form-group">
+                    <label>库存</label>
+                    <input type="number" name="stock" class="form-control" min="0" required>
+                </div>
+                <div class="form-group">
+                    <label>分类</label>
+                    <select name="category_id" class="form-control" id="categorySelect" required>
+                        <option value="">请选择分类</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>品牌</label>
+                    <input type="text" name="brand" class="form-control">
+                </div>
+                <div class="form-group">
+                    <label>图片URL</label>
+                    <input type="url" name="image_url" class="form-control" placeholder="https://example.com/image.jpg">
+                </div>
+                <button type="submit" class="btn btn-primary btn-block">提交</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="/static/js/common.js"></script>
+    <script>
+        function showTab(tab) {
+            document.getElementById('productsTab').style.display = tab === 'products' ? 'block' : 'none';
+            document.getElementById('ordersTab').style.display = tab === 'orders' ? 'block' : 'none';
+            
+            if (tab === 'orders') {
+                loadOrders();
+            }
+        }
+
+        async function loadProducts() {
+            const data = await request('/api/seller/products');
+            if (data.success) {
+                renderProducts(data.products);
+            }
+        }
+
+        function renderProducts(products) {
+            const tbody = document.querySelector('#productsTable tbody');
+            tbody.innerHTML = products.map(p => `
+                <tr>
+                    <td>${p.name}</td>
+                    <td>${formatPrice(p.price)}</td>
+                    <td>${p.stock}</td>
+                    <td>${getProductStatusBadge(p.status)}</td>
+                    <td>
+                        <button class="btn btn-sm btn-outline" onclick="editProduct(${p.id})">编辑</button>
+                        <button class="btn btn-sm btn-outline" onclick="deleteProduct(${p.id})">删除</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        async function loadCategories() {
+            const data = await request('/api/categories');
+            if (data.success) {
+                const select = document.getElementById('categorySelect');
+                data.categories.forEach(cat => {
+                    const option = document.createElement('option');
+                    option.value = cat.id;
+                    option.textContent = cat.name;
+                    select.appendChild(option);
+                });
+            }
+        }
+
+        function showAddProductModal() {
+            document.getElementById('addProductModal').classList.add('show');
+        }
+
+        function closeAddProductModal() {
+            document.getElementById('addProductModal').classList.remove('show');
+            document.getElementById('addProductForm').reset();
+        }
+
+        document.getElementById('addProductForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const productData = {
+                name: formData.get('name'),
+                description: formData.get('description'),
+                price: parseFloat(formData.get('price')),
+                stock: parseInt(formData.get('stock')),
+                category_id: parseInt(formData.get('category_id')),
+                brand: formData.get('brand'),
+                image_url: formData.get('image_url') || 'https://via.placeholder.com/300x300?text=Product'
+            };
+
+            const data = await request('/api/seller/products/add', {
+                method: 'POST',
+                body: JSON.stringify(productData)
+            });
+
+            if (data.success) {
+                showToast('商品已提交审核', 'success');
+                closeAddProductModal();
+                loadProducts();
+            } else {
+                showToast(data.message, 'danger');
+            }
+        });
+
+        async function deleteProduct(productId) {
+            if (!confirm('确定要删除这个商品吗？')) return;
+
+            const data = await request(`/api/seller/products/${productId}`, { method: 'DELETE' });
+            if (data.success) {
+                showToast('商品已删除', 'success');
+                loadProducts();
+            } else {
+                showToast(data.message, 'danger');
+            }
+        }
+
+        async function loadOrders() {
+            const data = await request('/api/seller/orders');
+            if (data.success) {
+                renderOrders(data.orders);
+            }
+        }
+
+        function renderOrders(orders) {
+            const section = document.getElementById('ordersSection');
+            if (orders.length === 0) {
+                section.innerHTML = '<div class="empty-state"><p>暂无订单</p></div>';
+                return;
+            }
+
+            section.innerHTML = orders.map(order => `
+                <div class="card mb-20">
+                    <div class="card-header flex-between">
+                        <div>
+                            <strong>订单号：</strong>${order.order_no}
+                        </div>
+                        <div>${getOrderStatusBadge(order.status)}</div>
+                    </div>
+                    <div class="card-body">
+                        ${order.items.map(item => `
+                            <div style="padding: 10px 0; border-bottom: 1px solid var(--border-color);">
+                                <strong>${item.product_name}</strong>
+                                <div style="color: #666; font-size: 14px;">
+                                    ${formatPrice(item.product_price)} × ${item.quantity} = ${formatPrice(item.subtotal)}
+                                </div>
+                            </div>
+                        `).join('')}
+                        <div style="margin-top: 10px; color: #666;">
+                            <div><strong>收货人：</strong>${order.receiver_name} ${order.receiver_phone}</div>
+                            <div><strong>地址：</strong>${order.shipping_address}</div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            loadCategories();
+            loadProducts();
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>商品详情 - 电商平台</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container navbar-content">
+            <a href="/" class="navbar-brand">🛒 电商平台</a>
+            <ul class="navbar-menu">
+                <li><a href="/">首页</a></li>
+                <li><a href="/products">商品</a></li>
+            </ul>
+            <div class="navbar-user"></div>
+        </div>
+    </nav>
+
+    <div class="container" style="margin-top: 30px; margin-bottom: 60px;">
+        <div id="productDetail"></div>
+        <div class="card mt-20">
+            <div class="card-header">商品评价</div>
+            <div class="card-body" id="reviewsSection"></div>
+        </div>
+    </div>
+
+    <script src="/static/js/common.js"></script>
+    <script>
+        const productId = {{ product_id }};
+
+        async function loadProduct() {
+            const data = await request(`/api/product/${productId}`);
+            if (data.success) {
+                renderProduct(data.product);
+                renderReviews(data.reviews);
+            } else {
+                document.getElementById('productDetail').innerHTML = 
+                    '<div class="empty-state"><p>商品不存在</p></div>';
+            }
+        }
+
+        function renderProduct(product) {
+            document.getElementById('productDetail').innerHTML = `
+                <div class="card">
+                    <div class="card-body" style="display: flex; gap: 40px;">
+                        <div style="flex: 0 0 400px;">
+                            <img src="${product.image_url}" alt="${product.name}" 
+                                 style="width: 100%; border-radius: 8px;">
+                        </div>
+                        <div style="flex: 1;">
+                            <h1 style="margin-bottom: 20px;">${product.name}</h1>
+                            <div style="color: #999; margin-bottom: 20px;">${product.description || '暂无描述'}</div>
+                            <div style="font-size: 32px; color: var(--primary-color); font-weight: bold; margin-bottom: 20px;">
+                                ${formatPrice(product.price)}
+                            </div>
+                            <div style="margin-bottom: 15px;">
+                                <span style="color: #666;">品牌：</span>
+                                <span>${product.brand || '无'}</span>
+                            </div>
+                            <div style="margin-bottom: 15px;">
+                                <span style="color: #666;">库存：</span>
+                                <span>${product.stock > 0 ? product.stock + ' 件' : '暂无库存'}</span>
+                            </div>
+                            <div style="margin-top: 30px; display: flex; gap: 10px;">
+                                <input type="number" id="quantity" value="1" min="1" max="${product.stock}" 
+                                       class="form-control" style="width: 100px;">
+                                <button class="btn btn-primary" onclick="addToCart()" ${product.stock === 0 ? 'disabled' : ''}>
+                                    加入购物车
+                                </button>
+                                <button class="btn btn-secondary" onclick="buyNow()" ${product.stock === 0 ? 'disabled' : ''}>
+                                    立即购买
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderReviews(reviews) {
+            const section = document.getElementById('reviewsSection');
+            if (reviews.length === 0) {
+                section.innerHTML = '<div class="empty-state"><p>暂无评价</p></div>';
+                return;
+            }
+
+            section.innerHTML = reviews.map(review => `
+                <div style="border-bottom: 1px solid var(--border-color); padding: 15px 0;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                        <div>
+                            <strong>${review.username}</strong>
+                            <span style="margin-left: 15px;">
+                                ${'⭐'.repeat(review.rating)}${'☆'.repeat(5 - review.rating)}
+                            </span>
+                        </div>
+                        <div style="color: #999; font-size: 12px;">
+                            ${formatDate(review.created_at)}
+                        </div>
+                    </div>
+                    <div>${review.comment || '用户未填写评论'}</div>
+                    ${review.replies && review.replies.length > 0 ? `
+                        <div style="margin-left: 30px; margin-top: 10px; padding: 10px; background-color: #f8f9fa; border-radius: 5px;">
+                            ${review.replies.map(reply => `
+                                <div>
+                                    <strong>${reply.username}：</strong>${reply.content}
+                                    <span style="color: #999; font-size: 12px; margin-left: 10px;">
+                                        ${formatDate(reply.created_at)}
+                                    </span>
+                                </div>
+                            `).join('')}
+                        </div>
+                    ` : ''}
+                </div>
+            `).join('');
+        }
+
+        async function addToCart() {
+            const user = await getCurrentUser();
+            if (!user) {
+                showToast('请先登录', 'warning');
+                setTimeout(() => window.location.href = '/login', 1000);
+                return;
+            }
+
+            const quantity = parseInt(document.getElementById('quantity').value);
+            const data = await request('/api/cart/add', {
+                method: 'POST',
+                body: JSON.stringify({ product_id: productId, quantity })
+            });
+
+            if (data.success) {
+                showToast('已添加到购物车', 'success');
+            } else {
+                showToast(data.message, 'danger');
+            }
+        }
+
+        async function buyNow() {
+            const user = await getCurrentUser();
+            if (!user) {
+                showToast('请先登录', 'warning');
+                setTimeout(() => window.location.href = '/login', 1000);
+                return;
+            }
+
+            await addToCart();
+            setTimeout(() => window.location.href = '/cart', 500);
+        }
+
+        document.addEventListener('DOMContentLoaded', loadProduct);
+    </script>
+</body>
+</html>

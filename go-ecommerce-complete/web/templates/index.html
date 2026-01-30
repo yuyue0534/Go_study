@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>电商平台 - 首页</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <!-- 导航栏 -->
+    <nav class="navbar">
+        <div class="container navbar-content">
+            <a href="/" class="navbar-brand">🛒 电商平台</a>
+            <ul class="navbar-menu">
+                <li><a href="/">首页</a></li>
+                <li><a href="/products">商品</a></li>
+            </ul>
+            <div class="navbar-user"></div>
+        </div>
+    </nav>
+
+    <!-- Hero区域 -->
+    <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 80px 0; text-align: center;">
+        <div class="container">
+            <h1 style="font-size: 48px; margin-bottom: 20px;">欢迎来到电商平台</h1>
+            <p style="font-size: 20px; margin-bottom: 30px;">发现优质商品，享受购物乐趣</p>
+            <a href="/products" class="btn btn-primary" style="padding: 15px 40px; font-size: 18px;">开始购物</a>
+        </div>
+    </div>
+
+    <!-- 商品分类 -->
+    <div class="container" style="margin-top: 60px;">
+        <h2 style="text-align: center; margin-bottom: 40px;">热门分类</h2>
+        <div id="categoriesGrid" class="products-grid"></div>
+    </div>
+
+    <!-- 推荐商品 -->
+    <div class="container" style="margin-top: 60px; margin-bottom: 60px;">
+        <h2 style="text-align: center; margin-bottom: 40px;">推荐商品</h2>
+        <div id="productsGrid" class="products-grid"></div>
+        <div style="text-align: center; margin-top: 30px;">
+            <a href="/products" class="btn btn-outline">查看更多</a>
+        </div>
+    </div>
+
+    <!-- 底部 -->
+    <footer style="background-color: #2c3e50; color: white; padding: 40px 0; text-align: center;">
+        <div class="container">
+            <p>&copy; 2026 电商平台. All rights reserved.</p>
+            <p style="margin-top: 10px;">
+                联系我们：<a href="mailto:support@example.com">support@example.com</a>
+            </p>
+        </div>
+    </footer>
+
+    <script src="/static/js/common.js"></script>
+    <script>
+        // 加载商品分类
+        async function loadCategories() {
+            const data = await request('/api/categories');
+            if (data.success) {
+                const grid = document.getElementById('categoriesGrid');
+                grid.innerHTML = data.categories.map(cat => `
+                    <div class="card" style="cursor: pointer;" onclick="window.location.href='/products?category=${cat.id}'">
+                        <div class="card-body text-center">
+                            <div style="font-size: 48px; margin-bottom: 10px;">📦</div>
+                            <h3>${cat.name}</h3>
+                            <p style="color: #666; margin-top: 10px;">${cat.description || ''}</p>
+                        </div>
+                    </div>
+                `).join('');
+            }
+        }
+
+        // 加载推荐商品
+        async function loadProducts() {
+            const data = await request('/api/products?page=1');
+            if (data.success) {
+                const grid = document.getElementById('productsGrid');
+                grid.innerHTML = data.products.slice(0, 8).map(product => `
+                    <div class="product-card" onclick="window.location.href='/product/${product.id}'">
+                        <img src="${product.image_url}" alt="${product.name}" class="product-image">
+                        <div class="product-info">
+                            <div class="product-name">${product.name}</div>
+                            <div class="product-price">${formatPrice(product.price)}</div>
+                            <button class="btn btn-primary btn-sm btn-block" style="margin-top: 10px;" onclick="event.stopPropagation(); addToCart(${product.id})">
+                                加入购物车
+                            </button>
+                        </div>
+                    </div>
+                `).join('');
+            }
+        }
+
+        // 添加到购物车
+        async function addToCart(productId) {
+            const user = await getCurrentUser();
+            if (!user) {
+                showToast('请先登录', 'warning');
+                setTimeout(() => {
+                    window.location.href = '/login';
+                }, 1000);
+                return;
+            }
+
+            const data = await request('/api/cart/add', {
+                method: 'POST',
+                body: JSON.stringify({ product_id: productId, quantity: 1 })
+            });
+
+            if (data.success) {
+                showToast('已添加到购物车', 'success');
+            } else {
+                showToast(data.message, 'danger');
