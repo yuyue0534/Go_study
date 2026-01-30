@@ -3,8 +3,10 @@ package main
 import (
 	"context"
 	"crypto/rand"
+	"database/sql"
 	"encoding/hex"
 	"encoding/json"
+	"log"
 	"net/http"
 	"strings"
 	"time"
@@ -57,6 +59,7 @@ func createSession(userID int) (string, error) {
 // validateSession 验证会话
 func validateSession(token string) (*User, error) {
 	var user User
+	var avatar sql.NullString
 	var expiresAt time.Time
 
 	err := db.QueryRow(`
@@ -64,16 +67,22 @@ func validateSession(token string) (*User, error) {
 		FROM sessions s
 		JOIN users u ON s.user_id = u.id
 		WHERE s.token = ?
-	`, token).Scan(&user.ID, &user.Username, &user.Email, &user.Role, &user.Avatar, 
+	`, token).Scan(&user.ID, &user.Username, &user.Email, &user.Role, &avatar,
 		&user.CreatedAt, &user.UpdatedAt, &expiresAt)
 
 	if err != nil {
+		log.Printf("Session validation error for token %s: %v", token[:10]+"...", err)
 		return nil, err
+	}
+
+	if avatar.Valid {
+		user.Avatar = avatar.String
 	}
 
 	if time.Now().After(expiresAt) {
 		db.Exec("DELETE FROM sessions WHERE token = ?", token)
-		return nil, err
+		log.Printf("Session expired for user %d", user.ID)
+		return nil, sql.ErrNoRows
 	}
 
 	return &user, nil

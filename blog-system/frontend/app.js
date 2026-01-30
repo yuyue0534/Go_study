@@ -14,10 +14,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const userStr = localStorage.getItem('currentUser');
     if (authToken && userStr) {
         currentUser = JSON.parse(userStr);
+        console.log('Loaded user:', currentUser, 'Token:', authToken ? 'exists' : 'missing');
         updateUIForAuth();
         loadNotifications();
     }
-    
+
     // 加载首页内容
     showHome();
     loadCategories();
@@ -78,20 +79,20 @@ function cancelArticleForm() {
 // ===== 认证相关 =====
 async function register(e) {
     e.preventDefault();
-    
+
     const username = document.getElementById('registerUsername').value;
     const email = document.getElementById('registerEmail').value;
     const password = document.getElementById('registerPassword').value;
-    
+
     try {
         const response = await fetch(`${API_BASE}/register`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ username, email, password })
         });
-        
+
         const data = await response.json();
-        
+
         if (data.success) {
             showToast('注册成功，请登录', 'success');
             showLogin();
@@ -105,26 +106,26 @@ async function register(e) {
 
 async function login(e) {
     e.preventDefault();
-    
+
     const username = document.getElementById('loginUsername').value;
     const password = document.getElementById('loginPassword').value;
-    
+
     try {
         const response = await fetch(`${API_BASE}/login`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ username, password })
         });
-        
+
         const data = await response.json();
-        
+
         if (data.success) {
             authToken = data.data.token;
             currentUser = data.data.user;
-            
+
             localStorage.setItem('authToken', authToken);
             localStorage.setItem('currentUser', JSON.stringify(currentUser));
-            
+
             showToast('登录成功', 'success');
             updateUIForAuth();
             showHome();
@@ -146,12 +147,12 @@ async function logout() {
     } catch (error) {
         console.error('Logout error:', error);
     }
-    
+
     authToken = null;
     currentUser = null;
     localStorage.removeItem('authToken');
     localStorage.removeItem('currentUser');
-    
+
     updateUIForAuth();
     showToast('已退出登录', 'success');
     showHome();
@@ -165,21 +166,22 @@ function updateUIForAuth() {
     const adminLink = document.getElementById('adminLink');
     const commentForm = document.getElementById('commentForm');
     const loginPrompt = document.getElementById('loginPrompt');
-    
+
     if (currentUser) {
+        console.log('Current user role:', currentUser.role);  // 添加调试日志
         authButtons.style.display = 'none';
         userMenu.style.display = 'flex';
         document.getElementById('welcomeUser').textContent = `欢迎, ${currentUser.username}`;
-        
+
         if (currentUser.role === 'admin' || currentUser.role === 'author') {
             createBtn.style.display = 'block';
             myArticlesLink.style.display = 'block';
         }
-        
+
         if (currentUser.role === 'admin') {
             adminLink.style.display = 'block';
         }
-        
+
         if (commentForm) commentForm.style.display = 'block';
         if (loginPrompt) loginPrompt.style.display = 'none';
     } else {
@@ -188,7 +190,7 @@ function updateUIForAuth() {
         createBtn.style.display = 'none';
         myArticlesLink.style.display = 'none';
         adminLink.style.display = 'none';
-        
+
         if (commentForm) commentForm.style.display = 'none';
         if (loginPrompt) loginPrompt.style.display = 'block';
     }
@@ -200,7 +202,7 @@ async function loadArticles(params = {}) {
         const queryParams = new URLSearchParams(params);
         const response = await fetch(`${API_BASE}/articles?${queryParams}`);
         const data = await response.json();
-        
+
         if (data.success) {
             displayArticles(data.data || []);
         }
@@ -211,11 +213,11 @@ async function loadArticles(params = {}) {
 
 async function loadMyArticles() {
     if (!currentUser) return;
-    
+
     try {
         const response = await fetch(`${API_BASE}/articles`);
         const data = await response.json();
-        
+
         if (data.success) {
             const myArticles = (data.data || []).filter(a => a.author_id === currentUser.id);
             displayArticles(myArticles);
@@ -227,12 +229,12 @@ async function loadMyArticles() {
 
 function displayArticles(articles) {
     const articleList = document.getElementById('articleList');
-    
+
     if (articles.length === 0) {
         articleList.innerHTML = '<p style="text-align:center;color:#7f8c8d;">暂无文章</p>';
         return;
     }
-    
+
     articleList.innerHTML = articles.map(article => `
         <div class="article-card" onclick="viewArticle(${article.id})">
             <h3>${escapeHtml(article.title)}</h3>
@@ -255,11 +257,11 @@ function displayArticles(articles) {
 
 async function viewArticle(id) {
     currentArticleId = id;
-    
+
     try {
         const response = await fetch(`${API_BASE}/articles/${id}`);
         const data = await response.json();
-        
+
         if (data.success) {
             displayArticleDetail(data.data);
             loadComments(id);
@@ -273,9 +275,9 @@ async function viewArticle(id) {
 
 function displayArticleDetail(article) {
     const detail = document.getElementById('articleDetail');
-    
+
     const canEdit = currentUser && (currentUser.role === 'admin' || currentUser.id === article.author_id);
-    
+
     detail.innerHTML = `
         <h1>${escapeHtml(article.title)}</h1>
         <div class="article-meta">
@@ -304,7 +306,7 @@ function displayArticleDetail(article) {
 
 async function submitArticle(e) {
     e.preventDefault();
-    
+
     const id = document.getElementById('articleId').value;
     const title = document.getElementById('articleTitle').value;
     const content = document.getElementById('articleContent').value;
@@ -312,10 +314,10 @@ async function submitArticle(e) {
     const cover_image = document.getElementById('articleCover').value;
     const tagsStr = document.getElementById('articleTags').value;
     const tags = tagsStr ? tagsStr.split(',').map(t => t.trim()).filter(t => t) : [];
-    
+
     const method = id ? 'PUT' : 'POST';
     const url = id ? `${API_BASE}/articles/${id}` : `${API_BASE}/articles`;
-    
+
     try {
         const response = await fetch(url, {
             method,
@@ -325,9 +327,9 @@ async function submitArticle(e) {
             },
             body: JSON.stringify({ title, content, category, cover_image, tags })
         });
-        
+
         const data = await response.json();
-        
+
         if (data.success) {
             showToast(id ? '更新成功' : '发布成功', 'success');
             showHome();
@@ -343,7 +345,7 @@ async function editArticle(id) {
     try {
         const response = await fetch(`${API_BASE}/articles/${id}`);
         const data = await response.json();
-        
+
         if (data.success) {
             const article = data.data;
             showPage('articleFormPage');
@@ -362,15 +364,15 @@ async function editArticle(id) {
 
 async function deleteArticle(id) {
     if (!confirm('确定要删除这篇文章吗？')) return;
-    
+
     try {
         const response = await fetch(`${API_BASE}/articles/${id}`, {
             method: 'DELETE',
             headers: { 'Authorization': `Bearer ${authToken}` }
         });
-        
+
         const data = await response.json();
-        
+
         if (data.success) {
             showToast('删除成功', 'success');
             showHome();
@@ -388,9 +390,9 @@ async function likeArticle(id) {
             method: 'POST',
             headers: { 'Authorization': `Bearer ${authToken}` }
         });
-        
+
         const data = await response.json();
-        
+
         if (data.success) {
             showToast('操作成功', 'success');
             viewArticle(id);
@@ -405,7 +407,7 @@ async function loadComments(articleId) {
     try {
         const response = await fetch(`${API_BASE}/articles/${articleId}/comments`);
         const data = await response.json();
-        
+
         if (data.success) {
             displayComments(data.data || []);
         }
@@ -416,18 +418,18 @@ async function loadComments(articleId) {
 
 function displayComments(comments) {
     const commentList = document.getElementById('commentList');
-    
+
     if (comments.length === 0) {
         commentList.innerHTML = '<p style="color:#7f8c8d;">暂无评论</p>';
         return;
     }
-    
+
     commentList.innerHTML = comments.map(comment => renderComment(comment)).join('');
 }
 
 function renderComment(comment) {
     const canDelete = currentUser && (currentUser.role === 'admin' || currentUser.id === comment.user_id);
-    
+
     return `
         <div class="comment">
             <div class="comment-header">
@@ -456,12 +458,12 @@ function renderComment(comment) {
 
 async function submitComment() {
     const content = document.getElementById('commentContent').value.trim();
-    
+
     if (!content) {
         showToast('请输入评论内容', 'error');
         return;
     }
-    
+
     try {
         const response = await fetch(`${API_BASE}/articles/${currentArticleId}/comments`, {
             method: 'POST',
@@ -474,9 +476,9 @@ async function submitComment() {
                 parent_id: currentReplyTo
             })
         });
-        
+
         const data = await response.json();
-        
+
         if (data.success) {
             showToast('评论成功', 'success');
             document.getElementById('commentContent').value = '';
@@ -498,15 +500,15 @@ function replyToComment(commentId) {
 
 async function deleteComment(id) {
     if (!confirm('确定要删除这条评论吗？')) return;
-    
+
     try {
         const response = await fetch(`${API_BASE}/comments/${id}`, {
             method: 'DELETE',
             headers: { 'Authorization': `Bearer ${authToken}` }
         });
-        
+
         const data = await response.json();
-        
+
         if (data.success) {
             showToast('删除成功', 'success');
             loadComments(currentArticleId);
@@ -524,9 +526,9 @@ async function likeComment(id) {
             method: 'POST',
             headers: { 'Authorization': `Bearer ${authToken}` }
         });
-        
+
         const data = await response.json();
-        
+
         if (data.success) {
             loadComments(currentArticleId);
         }
@@ -540,7 +542,7 @@ async function loadCategories() {
     try {
         const response = await fetch(`${API_BASE}/categories`);
         const data = await response.json();
-        
+
         if (data.success) {
             const select = document.getElementById('categoryFilter');
             select.innerHTML = '<option value="">全部分类</option>' +
@@ -555,7 +557,7 @@ async function loadTags() {
     try {
         const response = await fetch(`${API_BASE}/tags`);
         const data = await response.json();
-        
+
         if (data.success) {
             const select = document.getElementById('tagFilter');
             select.innerHTML = '<option value="">全部标签</option>' +
@@ -569,11 +571,11 @@ async function loadTags() {
 function filterArticles() {
     const category = document.getElementById('categoryFilter').value;
     const tag = document.getElementById('tagFilter').value;
-    
+
     const params = {};
     if (category) params.category = category;
     if (tag) params.tag = tag;
-    
+
     loadArticles(params);
 }
 
@@ -586,16 +588,16 @@ function handleSearch(e) {
 
 async function performSearch() {
     const keyword = document.getElementById('searchInput').value.trim();
-    
+
     if (!keyword) {
         showToast('请输入搜索关键词', 'error');
         return;
     }
-    
+
     try {
         const response = await fetch(`${API_BASE}/search?q=${encodeURIComponent(keyword)}`);
         const data = await response.json();
-        
+
         if (data.success) {
             displayArticles(data.data || []);
         }
@@ -606,15 +608,15 @@ async function performSearch() {
 
 // ===== 通知 =====
 async function loadNotifications() {
-    if (!currentUser) return;
-    
+    if (!currentUser || !authToken) return;  // 添加 authToken 检查
+
     try {
         const response = await fetch(`${API_BASE}/notifications`, {
             headers: { 'Authorization': `Bearer ${authToken}` }
         });
-        
+
         const data = await response.json();
-        
+
         if (data.success) {
             const unreadCount = (data.data || []).filter(n => !n.is_read).length;
             const badge = document.getElementById('notifBadge');
@@ -627,6 +629,7 @@ async function loadNotifications() {
         }
     } catch (error) {
         console.error('Load notifications error:', error);
+        // 不显示错误提示，避免干扰用户
     }
 }
 
@@ -635,9 +638,9 @@ async function loadNotificationList() {
         const response = await fetch(`${API_BASE}/notifications`, {
             headers: { 'Authorization': `Bearer ${authToken}` }
         });
-        
+
         const data = await response.json();
-        
+
         if (data.success) {
             displayNotifications(data.data || []);
         }
@@ -648,12 +651,12 @@ async function loadNotificationList() {
 
 function displayNotifications(notifications) {
     const list = document.getElementById('notificationList');
-    
+
     if (notifications.length === 0) {
         list.innerHTML = '<p style="color:#7f8c8d;">暂无通知</p>';
         return;
     }
-    
+
     list.innerHTML = notifications.map(notif => `
         <div class="notification ${notif.is_read ? '' : 'unread'}" onclick="markNotificationRead(${notif.id})">
             <div class="notification-content">${escapeHtml(notif.content)}</div>
@@ -668,7 +671,7 @@ async function markNotificationRead(id) {
             method: 'PUT',
             headers: { 'Authorization': `Bearer ${authToken}` }
         });
-        
+
         loadNotificationList();
         loadNotifications();
     } catch (error) {
@@ -680,14 +683,14 @@ async function markNotificationRead(id) {
 async function showAdminUsers() {
     document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
     event.target.classList.add('active');
-    
+
     try {
         const response = await fetch(`${API_BASE}/admin/users`, {
             headers: { 'Authorization': `Bearer ${authToken}` }
         });
-        
+
         const data = await response.json();
-        
+
         if (data.success) {
             displayAdminUsers(data.data || []);
         }
@@ -698,7 +701,7 @@ async function showAdminUsers() {
 
 function displayAdminUsers(users) {
     const content = document.getElementById('adminContent');
-    
+
     content.innerHTML = `
         <table class="user-table">
             <thead>
@@ -745,9 +748,9 @@ async function changeUserRole(userId, role) {
             },
             body: JSON.stringify({ role })
         });
-        
+
         const data = await response.json();
-        
+
         if (data.success) {
             showToast('更新成功', 'success');
         } else {
@@ -761,14 +764,14 @@ async function changeUserRole(userId, role) {
 async function showAdminComments() {
     document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
     event.target.classList.add('active');
-    
+
     try {
         const response = await fetch(`${API_BASE}/admin/comments/pending`, {
             headers: { 'Authorization': `Bearer ${authToken}` }
         });
-        
+
         const data = await response.json();
-        
+
         if (data.success) {
             displayAdminComments(data.data || []);
         }
@@ -779,12 +782,12 @@ async function showAdminComments() {
 
 function displayAdminComments(comments) {
     const content = document.getElementById('adminContent');
-    
+
     if (comments.length === 0) {
         content.innerHTML = '<p style="color:#7f8c8d;">暂无待审核评论</p>';
         return;
     }
-    
+
     content.innerHTML = `
         <table class="comment-table">
             <thead>
@@ -824,9 +827,9 @@ async function approveComment(commentId, status) {
             },
             body: JSON.stringify({ status })
         });
-        
+
         const data = await response.json();
-        
+
         if (data.success) {
             showToast('操作成功', 'success');
             showAdminComments();
@@ -843,7 +846,7 @@ function showToast(message, type = 'success') {
     const toast = document.getElementById('toast');
     toast.textContent = message;
     toast.className = `toast show ${type}`;
-    
+
     setTimeout(() => {
         toast.classList.remove('show');
     }, 3000);
@@ -856,12 +859,12 @@ function formatDate(dateString) {
     const minutes = Math.floor(diff / 60000);
     const hours = Math.floor(diff / 3600000);
     const days = Math.floor(diff / 86400000);
-    
+
     if (minutes < 1) return '刚刚';
     if (minutes < 60) return `${minutes}分钟前`;
     if (hours < 24) return `${hours}小时前`;
     if (days < 7) return `${days}天前`;
-    
+
     return date.toLocaleDateString('zh-CN');
 }
 

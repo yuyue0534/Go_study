@@ -42,7 +42,7 @@ func registerHandler(w http.ResponseWriter, r *http.Request) {
 
 	// 检查用户名是否已存在
 	var exists int
-	err := db.QueryRow("SELECT COUNT(*) FROM users WHERE username = ? OR email = ?", 
+	err := db.QueryRow("SELECT COUNT(*) FROM users WHERE username = ? OR email = ?",
 		req.Username, req.Email).Scan(&exists)
 	if err != nil {
 		respondJSON(w, http.StatusInternalServerError, Response{
@@ -74,7 +74,7 @@ func registerHandler(w http.ResponseWriter, r *http.Request) {
 	result, err := db.Exec(`
 		INSERT INTO users (username, email, password, role) 
 		VALUES (?, ?, ?, ?)
-	`, req.Username, req.Email, hashedPassword, "reader")
+	`, req.Username, req.Email, hashedPassword, "author")
 
 	if err != nil {
 		respondJSON(w, http.StatusInternalServerError, Response{
@@ -96,6 +96,7 @@ func registerHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 // loginHandler 用户登录
+// loginHandler 用户登录
 func loginHandler(w http.ResponseWriter, r *http.Request) {
 	enableCORS(w)
 	if r.Method == "OPTIONS" {
@@ -114,14 +115,23 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 	// 查询用户
 	var user User
 	var hashedPassword string
+	var avatar sql.NullString // 使用 NullString 处理可能为 NULL 的字段
+
 	err := db.QueryRow(`
 		SELECT id, username, email, password, role, avatar, created_at, updated_at 
 		FROM users 
 		WHERE username = ? OR email = ?
 	`, req.Username, req.Username).Scan(
-		&user.ID, &user.Username, &user.Email, &hashedPassword, 
-		&user.Role, &user.Avatar, &user.CreatedAt, &user.UpdatedAt,
+		&user.ID, &user.Username, &user.Email, &hashedPassword,
+		&user.Role, &avatar, &user.CreatedAt, &user.UpdatedAt,
 	)
+
+	// 处理 avatar 可能为 NULL 的情况
+	if avatar.Valid {
+		user.Avatar = avatar.String
+	} else {
+		user.Avatar = ""
+	}
 
 	if err == sql.ErrNoRows {
 		respondJSON(w, http.StatusUnauthorized, Response{
@@ -192,6 +202,20 @@ func getProfileHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	user := getUserFromContext(r)
+
+	// 重新查询以获取完整信息
+	var avatar sql.NullString
+	err := db.QueryRow(`
+		SELECT avatar FROM users WHERE id = ?
+	`, user.ID).Scan(&avatar)
+
+	if err == nil {
+		if avatar.Valid {
+			user.Avatar = avatar.String
+		} else {
+			user.Avatar = ""
+		}
+	}
 
 	respondJSON(w, http.StatusOK, Response{
 		Success: true,

@@ -1,6 +1,9 @@
 package main
 
 import (
+	"database/sql"
+	"encoding/json"
+	"log"
 	"net/http"
 	"strconv"
 
@@ -229,6 +232,7 @@ func getUsersHandler(w http.ResponseWriter, r *http.Request) {
 	`)
 
 	if err != nil {
+		log.Printf("Query users error: %v", err)
 		respondJSON(w, http.StatusInternalServerError, Response{
 			Success: false,
 			Message: "查询失败",
@@ -240,7 +244,15 @@ func getUsersHandler(w http.ResponseWriter, r *http.Request) {
 	users := []User{}
 	for rows.Next() {
 		var user User
-		rows.Scan(&user.ID, &user.Username, &user.Email, &user.Role, &user.Avatar, &user.CreatedAt)
+		var avatar sql.NullString
+		err := rows.Scan(&user.ID, &user.Username, &user.Email, &user.Role, &avatar, &user.CreatedAt)
+		if err != nil {
+			log.Printf("Scan user error: %v", err)
+			continue
+		}
+		if avatar.Valid {
+			user.Avatar = avatar.String
+		}
 		users = append(users, user)
 	}
 
