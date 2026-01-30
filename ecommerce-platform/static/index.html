@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>优选商城 - 品质生活，优选好物</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛒</text></svg>">
+</head>
+<body>
+    <div class="page-wrapper">
+        <!-- 头部 -->
+        <header class="header">
+            <div class="container header-inner">
+                <a href="/" class="logo" onclick="navigate('/'); return false;">
+                    <div class="logo-icon">🛒</div>
+                    <span>优选商城</span>
+                </a>
+                
+                <div class="search-box">
+                    <input type="text" class="search-input" id="search-input" placeholder="搜索商品..." 
+                           onkeypress="if(event.key==='Enter') searchProducts()">
+                    <button class="search-btn" onclick="searchProducts()">搜索</button>
+                </div>
+                
+                <nav class="nav-links">
+                    <a href="/login" class="nav-link">登录</a>
+                    <a href="/register" class="btn btn-primary btn-sm">注册</a>
+                </nav>
+            </div>
+        </header>
+
+        <!-- 主内容区 -->
+        <main class="main-content">
+            <div class="container" id="app-content">
+                <div class="loading">
+                    <div class="spinner"></div>
+                </div>
+            </div>
+        </main>
+
+        <!-- 页脚 -->
+        <footer class="footer">
+            <div class="container">
+                <div class="footer-grid">
+                    <div>
+                        <h4 class="footer-title">关于我们</h4>
+                        <ul class="footer-links">
+                            <li><a href="#">公司简介</a></li>
+                            <li><a href="#">联系我们</a></li>
+                            <li><a href="#">加入我们</a></li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h4 class="footer-title">购物指南</h4>
+                        <ul class="footer-links">
+                            <li><a href="#">购物流程</a></li>
+                            <li><a href="#">支付方式</a></li>
+                            <li><a href="#">配送方式</a></li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h4 class="footer-title">售后服务</h4>
+                        <ul class="footer-links">
+                            <li><a href="#">退换政策</a></li>
+                            <li><a href="#">售后保障</a></li>
+                            <li><a href="#">常见问题</a></li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h4 class="footer-title">商家入驻</h4>
+                        <ul class="footer-links">
+                            <li><a href="#">入驻流程</a></li>
+                            <li><a href="#">商家规范</a></li>
+                            <li><a href="#">商家中心</a></li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="footer-bottom">
+                    <p>© 2024 优选商城 版权所有 | 示例电商平台</p>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <!-- JavaScript -->
+    <script src="/static/js/app.js"></script>
+    <script src="/static/js/pages.js"></script>
+    <script src="/static/js/orders.js"></script>
+    <script src="/static/js/admin.js"></script>
+    <script>
+        // 初始化应用
+        document.addEventListener('DOMContentLoaded', async () => {
+            // 检查登录状态
+            await checkAuth();
+            
+            // 处理当前路由
+            handleRoute();
+            
+            // 监听浏览器前进后退
+            window.addEventListener('popstate', handleRoute);
+        });
+
+        // 阻止链接默认跳转，使用SPA路由
+        document.addEventListener('click', (e) => {
+            const link = e.target.closest('a');
+            if (link && link.href && link.href.startsWith(window.location.origin)) {
+                const path = new URL(link.href).pathname;
+                // 排除外部链接和特殊链接
+                if (!link.target && !link.download && path !== '#') {
+                    e.preventDefault();
+                    navigate(path);
+                }
+            }
+        });
+    </script>
+</body>
+</html>
