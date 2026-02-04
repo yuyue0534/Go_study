@@ -1,0 +1,1912 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CRM+ERP 管理系统</title>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #0f172a;
+            --primary-light: #1e293b;
+            --accent: #3b82f6;
+            --accent-hover: #2563eb;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --text: #0f172a;
+            --text-secondary: #64748b;
+            --bg: #f8fafc;
+            --bg-secondary: #ffffff;
+            --border: #e2e8f0;
+            --shadow: rgba(15, 23, 42, 0.08);
+            --shadow-lg: rgba(15, 23, 42, 0.15);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'IBM Plex Sans', -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* 登录页面样式 */
+        .auth-container {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .auth-container::before {
+            content: '';
+            position: absolute;
+            width: 150%;
+            height: 150%;
+            background: 
+                radial-gradient(circle at 20% 50%, rgba(255,255,255,0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(255,255,255,0.1) 0%, transparent 50%);
+            animation: float 20s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0) rotate(0deg); }
+            33% { transform: translate(30px, -30px) rotate(5deg); }
+            66% { transform: translate(-20px, 20px) rotate(-5deg); }
+        }
+
+        .auth-box {
+            background: var(--bg-secondary);
+            padding: 3rem;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px var(--shadow-lg);
+            width: 100%;
+            max-width: 440px;
+            position: relative;
+            z-index: 1;
+            animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .auth-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .auth-header h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 0.5rem;
+            letter-spacing: -0.02em;
+        }
+
+        .auth-header p {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: var(--text);
+            font-size: 0.9rem;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 0.875rem 1rem;
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            font-size: 1rem;
+            font-family: inherit;
+            transition: all 0.3s ease;
+            background: var(--bg);
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--accent);
+            background: var(--bg-secondary);
+            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+        }
+
+        .btn {
+            padding: 0.875rem 1.5rem;
+            border: none;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: inherit;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .btn-primary {
+            background: var(--accent);
+            color: white;
+            width: 100%;
+        }
+
+        .btn-primary:hover {
+            background: var(--accent-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(59, 130, 246, 0.3);
+        }
+
+        .btn-secondary {
+            background: var(--bg);
+            color: var(--text);
+            border: 2px solid var(--border);
+        }
+
+        .btn-secondary:hover {
+            background: var(--bg-secondary);
+            border-color: var(--accent);
+        }
+
+        .btn-success {
+            background: var(--success);
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #059669;
+        }
+
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #dc2626;
+        }
+
+        .btn-sm {
+            padding: 0.5rem 1rem;
+            font-size: 0.875rem;
+        }
+
+        .auth-toggle {
+            text-align: center;
+            margin-top: 1.5rem;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .auth-toggle a {
+            color: var(--accent);
+            text-decoration: none;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .auth-toggle a:hover {
+            text-decoration: underline;
+        }
+
+        /* 主应用布局 */
+        .app-container {
+            display: none;
+            min-height: 100vh;
+        }
+
+        .app-container.active {
+            display: flex;
+        }
+
+        /* 侧边栏 */
+        .sidebar {
+            width: 280px;
+            background: var(--primary);
+            color: white;
+            padding: 2rem 0;
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+            z-index: 100;
+        }
+
+        .sidebar-header {
+            padding: 0 2rem 2rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .sidebar-header h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+        }
+
+        .sidebar-header .user-info {
+            margin-top: 1rem;
+            padding: 0.75rem;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            font-size: 0.875rem;
+        }
+
+        .sidebar-nav {
+            padding: 1.5rem 0;
+        }
+
+        .nav-item {
+            padding: 0.875rem 2rem;
+            color: rgba(255, 255, 255, 0.7);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .nav-item:hover {
+            background: rgba(255, 255, 255, 0.05);
+            color: white;
+        }
+
+        .nav-item.active {
+            background: var(--accent);
+            color: white;
+            border-left: 4px solid white;
+        }
+
+        .nav-item::before {
+            content: '▪';
+            font-size: 1.2rem;
+        }
+
+        .logout-btn {
+            margin: 1.5rem 2rem 0;
+            width: calc(100% - 4rem);
+        }
+
+        /* 主内容区 */
+        .main-content {
+            margin-left: 280px;
+            flex: 1;
+            padding: 2rem;
+            min-height: 100vh;
+        }
+
+        .content-header {
+            background: var(--bg-secondary);
+            padding: 2rem;
+            border-radius: 16px;
+            margin-bottom: 2rem;
+            box-shadow: 0 2px 8px var(--shadow);
+        }
+
+        .content-header h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 0.5rem;
+            letter-spacing: -0.02em;
+        }
+
+        .content-header p {
+            color: var(--text-secondary);
+        }
+
+        .section {
+            display: none;
+        }
+
+        .section.active {
+            display: block;
+            animation: fadeIn 0.4s ease;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* 卡片 */
+        .card {
+            background: var(--bg-secondary);
+            border-radius: 16px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 2px 8px var(--shadow);
+            transition: all 0.3s ease;
+        }
+
+        .card:hover {
+            box-shadow: 0 8px 24px var(--shadow-lg);
+            transform: translateY(-2px);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .card-header h3 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--primary);
+        }
+
+        .card-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        /* 表格 */
+        .table-container {
+            overflow-x: auto;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: var(--bg-secondary);
+        }
+
+        thead {
+            background: var(--bg);
+        }
+
+        th {
+            padding: 1rem;
+            text-align: left;
+            font-weight: 600;
+            color: var(--text);
+            border-bottom: 2px solid var(--border);
+            font-size: 0.875rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        td {
+            padding: 1rem;
+            border-bottom: 1px solid var(--border);
+            color: var(--text);
+        }
+
+        tbody tr {
+            transition: all 0.2s ease;
+        }
+
+        tbody tr:hover {
+            background: var(--bg);
+        }
+
+        tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        /* 模态框 */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            backdrop-filter: blur(4px);
+            animation: fadeIn 0.3s ease;
+        }
+
+        .modal.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background: var(--bg-secondary);
+            padding: 2rem;
+            border-radius: 20px;
+            width: 90%;
+            max-width: 600px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px var(--shadow-lg);
+            animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .modal-header h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--text-secondary);
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+        }
+
+        .modal-close:hover {
+            background: var(--bg);
+            color: var(--text);
+        }
+
+        /* 表单网格 */
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+        }
+
+        /* 状态标签 */
+        .status-badge {
+            display: inline-block;
+            padding: 0.375rem 0.875rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            letter-spacing: 0.02em;
+        }
+
+        .status-pending {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .status-processing {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+
+        .status-completed {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .status-cancelled {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        /* 提示消息 */
+        .alert {
+            padding: 1rem 1.25rem;
+            border-radius: 12px;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            animation: slideDown 0.4s ease;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .alert-success {
+            background: #d1fae5;
+            color: #065f46;
+            border: 1px solid #10b981;
+        }
+
+        .alert-error {
+            background: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #ef4444;
+        }
+
+        .alert-info {
+            background: #dbeafe;
+            color: #1e40af;
+            border: 1px solid #3b82f6;
+        }
+
+        /* 加载动画 */
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* 空状态 */
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            color: var(--text-secondary);
+        }
+
+        .empty-state svg {
+            width: 80px;
+            height: 80px;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+
+        /* 响应式 */
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+                transition: transform 0.3s ease;
+            }
+
+            .sidebar.mobile-open {
+                transform: translateX(0);
+            }
+
+            .main-content {
+                margin-left: 0;
+            }
+
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .card-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 1rem;
+            }
+
+            .card-actions {
+                width: 100%;
+            }
+
+            .btn {
+                width: 100%;
+            }
+        }
+
+        /* 仪表盘统计卡片 */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, var(--accent) 0%, var(--accent-hover) 100%);
+            color: white;
+            padding: 2rem;
+            border-radius: 16px;
+            box-shadow: 0 4px 16px rgba(59, 130, 246, 0.2);
+            transition: all 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 24px rgba(59, 130, 246, 0.3);
+        }
+
+        .stat-card:nth-child(2) {
+            background: linear-gradient(135deg, var(--success) 0%, #059669 100%);
+            box-shadow: 0 4px 16px rgba(16, 185, 129, 0.2);
+        }
+
+        .stat-card:nth-child(2):hover {
+            box-shadow: 0 8px 24px rgba(16, 185, 129, 0.3);
+        }
+
+        .stat-card:nth-child(3) {
+            background: linear-gradient(135deg, var(--warning) 0%, #d97706 100%);
+            box-shadow: 0 4px 16px rgba(245, 158, 11, 0.2);
+        }
+
+        .stat-card:nth-child(3):hover {
+            box-shadow: 0 8px 24px rgba(245, 158, 11, 0.3);
+        }
+
+        .stat-card:nth-child(4) {
+            background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+            box-shadow: 0 4px 16px rgba(139, 92, 246, 0.2);
+        }
+
+        .stat-card:nth-child(4):hover {
+            box-shadow: 0 8px 24px rgba(139, 92, 246, 0.3);
+        }
+
+        .stat-label {
+            font-size: 0.875rem;
+            opacity: 0.9;
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            line-height: 1;
+        }
+
+        /* 搜索框 */
+        .search-box {
+            position: relative;
+            margin-bottom: 1.5rem;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 0.875rem 1rem 0.875rem 3rem;
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .search-box input:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+        }
+
+        .search-box::before {
+            content: '🔍';
+            position: absolute;
+            left: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 1.2rem;
+        }
+
+        /* 订单详情项 */
+        .order-items {
+            margin-top: 1rem;
+        }
+
+        .order-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.75rem;
+            background: var(--bg);
+            border-radius: 8px;
+            margin-bottom: 0.5rem;
+        }
+
+        .order-item-info {
+            flex: 1;
+        }
+
+        .order-item-price {
+            font-weight: 600;
+            color: var(--accent);
+        }
+
+        /* 库存警告 */
+        .stock-warning {
+            color: var(--danger);
+            font-weight: 600;
+        }
+
+        .stock-ok {
+            color: var(--success);
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <!-- 登录/注册页面 -->
+    <div class="auth-container" id="authContainer">
+        <div class="auth-box">
+            <!-- 登录表单 -->
+            <div id="loginForm">
+                <div class="auth-header">
+                    <h1>CRM+ERP 系统</h1>
+                    <p>登录您的账户</p>
+                </div>
+                <form onsubmit="handleLogin(event)">
+                    <div class="form-group">
+                        <label>用户名</label>
+                        <input type="text" class="form-input" id="loginUsername" required placeholder="请输入用户名">
+                    </div>
+                    <div class="form-group">
+                        <label>密码</label>
+                        <input type="password" class="form-input" id="loginPassword" required placeholder="请输入密码">
+                    </div>
+                    <button type="submit" class="btn btn-primary">
+                        <span id="loginBtnText">登录</span>
+                        <span class="loading" id="loginLoading" style="display: none;"></span>
+                    </button>
+                </form>
+                <div class="auth-toggle">
+                    还没有账户？<a onclick="showRegister()">立即注册</a>
+                </div>
+            </div>
+
+            <!-- 注册表单 -->
+            <div id="registerForm" style="display: none;">
+                <div class="auth-header">
+                    <h1>创建账户</h1>
+                    <p>加入 CRM+ERP 系统</p>
+                </div>
+                <form onsubmit="handleRegister(event)">
+                    <div class="form-group">
+                        <label>用户名</label>
+                        <input type="text" class="form-input" id="registerUsername" required placeholder="请输入用户名">
+                    </div>
+                    <div class="form-group">
+                        <label>邮箱</label>
+                        <input type="email" class="form-input" id="registerEmail" required placeholder="请输入邮箱">
+                    </div>
+                    <div class="form-group">
+                        <label>密码</label>
+                        <input type="password" class="form-input" id="registerPassword" required placeholder="请输入密码">
+                    </div>
+                    <button type="submit" class="btn btn-primary">
+                        <span id="registerBtnText">注册</span>
+                        <span class="loading" id="registerLoading" style="display: none;"></span>
+                    </button>
+                </form>
+                <div class="auth-toggle">
+                    已有账户？<a onclick="showLogin()">立即登录</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 主应用 -->
+    <div class="app-container" id="appContainer">
+        <!-- 侧边栏 -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h2>CRM+ERP</h2>
+                <div class="user-info">
+                    <div id="userDisplayName">用户</div>
+                    <div style="font-size: 0.75rem; opacity: 0.7;" id="userEmail">email@example.com</div>
+                </div>
+            </div>
+            <nav class="sidebar-nav">
+                <div class="nav-item active" onclick="showSection('dashboard')">仪表盘</div>
+                <div class="nav-item" onclick="showSection('customers')">客户管理</div>
+                <div class="nav-item" onclick="showSection('products')">产品管理</div>
+                <div class="nav-item" onclick="showSection('inventory')">库存管理</div>
+                <div class="nav-item" onclick="showSection('orders')">订单管理</div>
+            </nav>
+            <button class="btn btn-danger logout-btn" onclick="handleLogout()">退出登录</button>
+        </aside>
+
+        <!-- 主内容区 -->
+        <main class="main-content">
+            <!-- 仪表盘 -->
+            <section class="section active" id="dashboard">
+                <div class="content-header">
+                    <h1>仪表盘</h1>
+                    <p>欢迎回来，这是您的系统概览</p>
+                </div>
+
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-label">客户总数</div>
+                        <div class="stat-value" id="statCustomers">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">产品总数</div>
+                        <div class="stat-value" id="statProducts">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">订单总数</div>
+                        <div class="stat-value" id="statOrders">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">库存项目</div>
+                        <div class="stat-value" id="statInventory">0</div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h3>⚙️ 系统设置</h3>
+                    </div>
+                    <div class="form-group">
+                        <label>API服务器地址</label>
+                        <input type="text" class="form-input" id="apiUrlInput" placeholder="http://localhost:8080/api/v1">
+                        <small style="color: var(--text-secondary); display: block; margin-top: 0.5rem;">
+                            💡 本地开发: http://localhost:8080/api/v1<br>
+                            🌐 Koyeb部署: https://your-app.koyeb.app/api/v1
+                        </small>
+                    </div>
+                    <button class="btn btn-success btn-sm" onclick="updateApiUrl()">💾 保存设置</button>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h3>⚡ 快速操作</h3>
+                    </div>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+                        <button class="btn btn-primary" onclick="showSection('customers'); openModal('customerModal')">
+                            新建客户
+                        </button>
+                        <button class="btn btn-primary" onclick="showSection('products'); openModal('productModal')">
+                            新建产品
+                        </button>
+                        <button class="btn btn-primary" onclick="showSection('orders'); openModal('orderModal')">
+                            创建订单
+                        </button>
+                        <button class="btn btn-primary" onclick="showSection('inventory'); openModal('inventoryModal')">
+                            添加库存
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 客户管理 -->
+            <section class="section" id="customers">
+                <div class="content-header">
+                    <h1>客户管理</h1>
+                    <p>管理您的客户信息</p>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h3>客户列表</h3>
+                        <button class="btn btn-primary btn-sm" onclick="openModal('customerModal')">
+                            ➕ 新建客户
+                        </button>
+                    </div>
+                    <div class="search-box">
+                        <input type="text" placeholder="搜索客户..." oninput="filterCustomers(this.value)">
+                    </div>
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>姓名</th>
+                                    <th>公司</th>
+                                    <th>邮箱</th>
+                                    <th>电话</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="customersTable">
+                                <tr>
+                                    <td colspan="6" class="empty-state">暂无客户数据</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 产品管理 -->
+            <section class="section" id="products">
+                <div class="content-header">
+                    <h1>产品管理</h1>
+                    <p>管理您的产品信息</p>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h3>产品列表</h3>
+                        <button class="btn btn-primary btn-sm" onclick="openModal('productModal')">
+                            ➕ 新建产品
+                        </button>
+                    </div>
+                    <div class="search-box">
+                        <input type="text" placeholder="搜索产品..." oninput="filterProducts(this.value)">
+                    </div>
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>名称</th>
+                                    <th>SKU</th>
+                                    <th>价格</th>
+                                    <th>描述</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="productsTable">
+                                <tr>
+                                    <td colspan="6" class="empty-state">暂无产品数据</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 库存管理 -->
+            <section class="section" id="inventory">
+                <div class="content-header">
+                    <h1>库存管理</h1>
+                    <p>管理产品库存信息</p>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h3>库存列表</h3>
+                        <button class="btn btn-primary btn-sm" onclick="openModal('inventoryModal')">
+                            ➕ 添加库存
+                        </button>
+                    </div>
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>产品ID</th>
+                                    <th>产品名称</th>
+                                    <th>数量</th>
+                                    <th>仓库位置</th>
+                                    <th>状态</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="inventoryTable">
+                                <tr>
+                                    <td colspan="7" class="empty-state">暂无库存数据</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 订单管理 -->
+            <section class="section" id="orders">
+                <div class="content-header">
+                    <h1>订单管理</h1>
+                    <p>管理客户订单</p>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h3>订单列表</h3>
+                        <button class="btn btn-primary btn-sm" onclick="openModal('orderModal')">
+                            ➕ 创建订单
+                        </button>
+                    </div>
+                    <div class="search-box">
+                        <input type="text" placeholder="搜索订单..." oninput="filterOrders(this.value)">
+                    </div>
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>订单号</th>
+                                    <th>客户ID</th>
+                                    <th>总金额</th>
+                                    <th>状态</th>
+                                    <th>创建时间</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="ordersTable">
+                                <tr>
+                                    <td colspan="7" class="empty-state">暂无订单数据</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- 客户模态框 -->
+    <div class="modal" id="customerModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="customerModalTitle">新建客户</h2>
+                <button class="modal-close" onclick="closeModal('customerModal')">✕</button>
+            </div>
+            <form onsubmit="handleCustomerSubmit(event)">
+                <input type="hidden" id="customerId">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>姓名 *</label>
+                        <input type="text" class="form-input" id="customerName" required>
+                    </div>
+                    <div class="form-group">
+                        <label>公司</label>
+                        <input type="text" class="form-input" id="customerCompany">
+                    </div>
+                    <div class="form-group">
+                        <label>邮箱 *</label>
+                        <input type="email" class="form-input" id="customerEmail" required>
+                    </div>
+                    <div class="form-group">
+                        <label>电话</label>
+                        <input type="tel" class="form-input" id="customerPhone">
+                    </div>
+                </div>
+                <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
+                    <button type="submit" class="btn btn-primary" style="flex: 1;">
+                        <span id="customerSubmitText">保存</span>
+                    </button>
+                    <button type="button" class="btn btn-secondary" style="flex: 1;" onclick="closeModal('customerModal')">取消</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 产品模态框 -->
+    <div class="modal" id="productModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="productModalTitle">新建产品</h2>
+                <button class="modal-close" onclick="closeModal('productModal')">✕</button>
+            </div>
+            <form onsubmit="handleProductSubmit(event)">
+                <input type="hidden" id="productId">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>产品名称 *</label>
+                        <input type="text" class="form-input" id="productName" required>
+                    </div>
+                    <div class="form-group">
+                        <label>SKU *</label>
+                        <input type="text" class="form-input" id="productSku" required>
+                    </div>
+                    <div class="form-group">
+                        <label>价格 *</label>
+                        <input type="number" step="0.01" class="form-input" id="productPrice" required>
+                    </div>
+                    <div class="form-group">
+                        <label>描述</label>
+                        <input type="text" class="form-input" id="productDescription">
+                    </div>
+                </div>
+                <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
+                    <button type="submit" class="btn btn-primary" style="flex: 1;">
+                        <span id="productSubmitText">保存</span>
+                    </button>
+                    <button type="button" class="btn btn-secondary" style="flex: 1;" onclick="closeModal('productModal')">取消</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 库存模态框 -->
+    <div class="modal" id="inventoryModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="inventoryModalTitle">添加库存</h2>
+                <button class="modal-close" onclick="closeModal('inventoryModal')">✕</button>
+            </div>
+            <form onsubmit="handleInventorySubmit(event)">
+                <input type="hidden" id="inventoryId">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>产品ID *</label>
+                        <input type="number" class="form-input" id="inventoryProductId" required>
+                    </div>
+                    <div class="form-group">
+                        <label>数量 *</label>
+                        <input type="number" class="form-input" id="inventoryQuantity" required>
+                    </div>
+                    <div class="form-group">
+                        <label>仓库位置</label>
+                        <input type="text" class="form-input" id="inventoryLocation" placeholder="例如：A区01号">
+                    </div>
+                </div>
+                <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
+                    <button type="submit" class="btn btn-primary" style="flex: 1;">
+                        <span id="inventorySubmitText">保存</span>
+                    </button>
+                    <button type="button" class="btn btn-secondary" style="flex: 1;" onclick="closeModal('inventoryModal')">取消</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 订单模态框 -->
+    <div class="modal" id="orderModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="orderModalTitle">创建订单</h2>
+                <button class="modal-close" onclick="closeModal('orderModal')">✕</button>
+            </div>
+            <form onsubmit="handleOrderSubmit(event)">
+                <input type="hidden" id="orderId">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>订单号 *</label>
+                        <input type="text" class="form-input" id="orderNumber" required>
+                    </div>
+                    <div class="form-group">
+                        <label>客户ID *</label>
+                        <input type="number" class="form-input" id="orderCustomerId" required>
+                    </div>
+                    <div class="form-group">
+                        <label>总金额 *</label>
+                        <input type="number" step="0.01" class="form-input" id="orderTotalAmount" required>
+                    </div>
+                    <div class="form-group">
+                        <label>状态</label>
+                        <select class="form-input" id="orderStatus">
+                            <option value="pending">待处理</option>
+                            <option value="processing">处理中</option>
+                            <option value="completed">已完成</option>
+                            <option value="cancelled">已取消</option>
+                        </select>
+                    </div>
+                </div>
+                <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
+                    <button type="submit" class="btn btn-primary" style="flex: 1;">
+                        <span id="orderSubmitText">保存</span>
+                    </button>
+                    <button type="button" class="btn btn-secondary" style="flex: 1;" onclick="closeModal('orderModal')">取消</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // 全局变量 - 可以修改为您的实际API地址
+        // 本地开发: http://localhost:8080/api/v1
+        // Koyeb部署: https://your-app.koyeb.app/api/v1
+        let API_BASE_URL = localStorage.getItem('apiBaseUrl') || 'http://localhost:8080/api/v1';
+        let authToken = localStorage.getItem('authToken') || '';
+        let currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
+        
+        // 数据缓存
+        let customersData = [];
+        let productsData = [];
+        let inventoryData = [];
+        let ordersData = [];
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            // 显示当前API地址
+            const apiInput = document.getElementById('apiUrlInput');
+            if (apiInput) {
+                apiInput.value = API_BASE_URL;
+            }
+            
+            if (authToken && currentUser.username) {
+                showApp();
+                loadAllData();
+            }
+        });
+
+        // 更新API地址
+        function updateApiUrl() {
+            const newUrl = document.getElementById('apiUrlInput').value.trim();
+            if (!newUrl) {
+                showAlert('请输入有效的API地址', 'error');
+                return;
+            }
+            
+            // 移除末尾的斜杠
+            API_BASE_URL = newUrl.endsWith('/') ? newUrl.slice(0, -1) : newUrl;
+            localStorage.setItem('apiBaseUrl', API_BASE_URL);
+            showAlert('API地址已更新，请重新登录', 'success');
+            
+            // 清除认证信息
+            setTimeout(() => {
+                handleLogout();
+            }, 1500);
+        }
+
+        // 认证相关函数
+        function showLogin() {
+            document.getElementById('loginForm').style.display = 'block';
+            document.getElementById('registerForm').style.display = 'none';
+        }
+
+        function showRegister() {
+            document.getElementById('loginForm').style.display = 'none';
+            document.getElementById('registerForm').style.display = 'block';
+        }
+
+        async function handleLogin(event) {
+            event.preventDefault();
+            const username = document.getElementById('loginUsername').value;
+            const password = document.getElementById('loginPassword').value;
+            
+            showLoading('loginBtnText', 'loginLoading');
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/auth/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok && data.data && data.data.token) {
+                    authToken = data.data.token;
+                    currentUser = { username, email: data.data.email || '' };
+                    localStorage.setItem('authToken', authToken);
+                    localStorage.setItem('currentUser', JSON.stringify(currentUser));
+                    showApp();
+                    loadAllData();
+                } else {
+                    showAlert('登录失败：' + (data.message || '未知错误'), 'error');
+                }
+            } catch (error) {
+                showAlert('登录失败：' + error.message, 'error');
+            } finally {
+                hideLoading('loginBtnText', 'loginLoading');
+            }
+        }
+
+        async function handleRegister(event) {
+            event.preventDefault();
+            const username = document.getElementById('registerUsername').value;
+            const email = document.getElementById('registerEmail').value;
+            const password = document.getElementById('registerPassword').value;
+            
+            showLoading('registerBtnText', 'registerLoading');
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/auth/register`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, email, password })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showAlert('注册成功！请登录', 'success');
+                    setTimeout(() => showLogin(), 1500);
+                } else {
+                    showAlert('注册失败：' + (data.message || '未知错误'), 'error');
+                }
+            } catch (error) {
+                showAlert('注册失败：' + error.message, 'error');
+            } finally {
+                hideLoading('registerBtnText', 'registerLoading');
+            }
+        }
+
+        function handleLogout() {
+            if (confirm('确定要退出登录吗？')) {
+                authToken = '';
+                currentUser = {};
+                localStorage.removeItem('authToken');
+                localStorage.removeItem('currentUser');
+                document.getElementById('authContainer').style.display = 'flex';
+                document.getElementById('appContainer').classList.remove('active');
+            }
+        }
+
+        function showApp() {
+            document.getElementById('authContainer').style.display = 'none';
+            document.getElementById('appContainer').classList.add('active');
+            document.getElementById('userDisplayName').textContent = currentUser.username || '用户';
+            document.getElementById('userEmail').textContent = currentUser.email || '';
+        }
+
+        // 导航相关
+        function showSection(sectionId) {
+            // 移除所有激活状态
+            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            
+            // 添加新的激活状态
+            document.getElementById(sectionId).classList.add('active');
+            event.target.classList.add('active');
+            
+            // 加载对应数据
+            if (sectionId === 'customers') loadCustomers();
+            if (sectionId === 'products') loadProducts();
+            if (sectionId === 'inventory') loadInventory();
+            if (sectionId === 'orders') loadOrders();
+        }
+
+        // 模态框控制
+        function openModal(modalId) {
+            document.getElementById(modalId).classList.add('active');
+            // 清空表单
+            if (modalId === 'customerModal') resetCustomerForm();
+            if (modalId === 'productModal') resetProductForm();
+            if (modalId === 'inventoryModal') resetInventoryForm();
+            if (modalId === 'orderModal') resetOrderForm();
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('active');
+        }
+
+        // API请求封装
+        async function apiRequest(url, options = {}) {
+            const headers = {
+                'Content-Type': 'application/json',
+                ...(authToken && { 'Authorization': `Bearer ${authToken}` })
+            };
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}${url}`, {
+                    ...options,
+                    headers: { ...headers, ...options.headers }
+                });
+                
+                const data = await response.json();
+                
+                if (!response.ok) {
+                    throw new Error(data.message || '请求失败');
+                }
+                
+                return data;
+            } catch (error) {
+                throw error;
+            }
+        }
+
+        // 加载所有数据
+        async function loadAllData() {
+            await Promise.all([
+                loadCustomers(),
+                loadProducts(),
+                loadInventory(),
+                loadOrders()
+            ]);
+            updateDashboardStats();
+        }
+
+        // 客户管理
+        async function loadCustomers() {
+            try {
+                const data = await apiRequest('/customers');
+                customersData = data.data || [];
+                renderCustomers(customersData);
+            } catch (error) {
+                showAlert('加载客户数据失败：' + error.message, 'error');
+            }
+        }
+
+        function renderCustomers(customers) {
+            const tbody = document.getElementById('customersTable');
+            if (!customers || customers.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" class="empty-state">暂无客户数据</td></tr>';
+                return;
+            }
+            
+            tbody.innerHTML = customers.map(customer => `
+                <tr>
+                    <td>${customer.id}</td>
+                    <td>${customer.name}</td>
+                    <td>${customer.company || '-'}</td>
+                    <td>${customer.email}</td>
+                    <td>${customer.phone || '-'}</td>
+                    <td>
+                        <button class="btn btn-sm btn-secondary" onclick="editCustomer(${customer.id})">编辑</button>
+                        <button class="btn btn-sm btn-danger" onclick="deleteCustomer(${customer.id})">删除</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function filterCustomers(keyword) {
+            const filtered = customersData.filter(c => 
+                c.name.toLowerCase().includes(keyword.toLowerCase()) ||
+                (c.company && c.company.toLowerCase().includes(keyword.toLowerCase())) ||
+                c.email.toLowerCase().includes(keyword.toLowerCase())
+            );
+            renderCustomers(filtered);
+        }
+
+        async function handleCustomerSubmit(event) {
+            event.preventDefault();
+            const id = document.getElementById('customerId').value;
+            const customer = {
+                name: document.getElementById('customerName').value,
+                company: document.getElementById('customerCompany').value,
+                email: document.getElementById('customerEmail').value,
+                phone: document.getElementById('customerPhone').value
+            };
+            
+            try {
+                if (id) {
+                    await apiRequest(`/customers/${id}`, {
+                        method: 'PUT',
+                        body: JSON.stringify(customer)
+                    });
+                    showAlert('客户更新成功', 'success');
+                } else {
+                    await apiRequest('/customers', {
+                        method: 'POST',
+                        body: JSON.stringify(customer)
+                    });
+                    showAlert('客户创建成功', 'success');
+                }
+                closeModal('customerModal');
+                loadCustomers();
+                updateDashboardStats();
+            } catch (error) {
+                showAlert('操作失败：' + error.message, 'error');
+            }
+        }
+
+        function editCustomer(id) {
+            const customer = customersData.find(c => c.id === id);
+            if (!customer) return;
+            
+            document.getElementById('customerId').value = customer.id;
+            document.getElementById('customerName').value = customer.name;
+            document.getElementById('customerCompany').value = customer.company || '';
+            document.getElementById('customerEmail').value = customer.email;
+            document.getElementById('customerPhone').value = customer.phone || '';
+            document.getElementById('customerModalTitle').textContent = '编辑客户';
+            openModal('customerModal');
+        }
+
+        async function deleteCustomer(id) {
+            if (!confirm('确定要删除这个客户吗？')) return;
+            
+            try {
+                await apiRequest(`/customers/${id}`, { method: 'DELETE' });
+                showAlert('客户删除成功', 'success');
+                loadCustomers();
+                updateDashboardStats();
+            } catch (error) {
+                showAlert('删除失败：' + error.message, 'error');
+            }
+        }
+
+        function resetCustomerForm() {
+            document.getElementById('customerId').value = '';
+            document.getElementById('customerName').value = '';
+            document.getElementById('customerCompany').value = '';
+            document.getElementById('customerEmail').value = '';
+            document.getElementById('customerPhone').value = '';
+            document.getElementById('customerModalTitle').textContent = '新建客户';
+        }
+
+        // 产品管理
+        async function loadProducts() {
+            try {
+                const data = await apiRequest('/products');
+                productsData = data.data || [];
+                renderProducts(productsData);
+            } catch (error) {
+                showAlert('加载产品数据失败：' + error.message, 'error');
+            }
+        }
+
+        function renderProducts(products) {
+            const tbody = document.getElementById('productsTable');
+            if (!products || products.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" class="empty-state">暂无产品数据</td></tr>';
+                return;
+            }
+            
+            tbody.innerHTML = products.map(product => `
+                <tr>
+                    <td>${product.id}</td>
+                    <td>${product.name}</td>
+                    <td><code>${product.sku}</code></td>
+                    <td>¥${parseFloat(product.price).toFixed(2)}</td>
+                    <td>${product.description || '-'}</td>
+                    <td>
+                        <button class="btn btn-sm btn-secondary" onclick="editProduct(${product.id})">编辑</button>
+                        <button class="btn btn-sm btn-danger" onclick="deleteProduct(${product.id})">删除</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function filterProducts(keyword) {
+            const filtered = productsData.filter(p => 
+                p.name.toLowerCase().includes(keyword.toLowerCase()) ||
+                p.sku.toLowerCase().includes(keyword.toLowerCase())
+            );
+            renderProducts(filtered);
+        }
+
+        async function handleProductSubmit(event) {
+            event.preventDefault();
+            const id = document.getElementById('productId').value;
+            const product = {
+                name: document.getElementById('productName').value,
+                sku: document.getElementById('productSku').value,
+                price: parseFloat(document.getElementById('productPrice').value),
+                description: document.getElementById('productDescription').value
+            };
+            
+            try {
+                if (id) {
+                    await apiRequest(`/products/${id}`, {
+                        method: 'PUT',
+                        body: JSON.stringify(product)
+                    });
+                    showAlert('产品更新成功', 'success');
+                } else {
+                    await apiRequest('/products', {
+                        method: 'POST',
+                        body: JSON.stringify(product)
+                    });
+                    showAlert('产品创建成功', 'success');
+                }
+                closeModal('productModal');
+                loadProducts();
+                updateDashboardStats();
+            } catch (error) {
+                showAlert('操作失败：' + error.message, 'error');
+            }
+        }
+
+        function editProduct(id) {
+            const product = productsData.find(p => p.id === id);
+            if (!product) return;
+            
+            document.getElementById('productId').value = product.id;
+            document.getElementById('productName').value = product.name;
+            document.getElementById('productSku').value = product.sku;
+            document.getElementById('productPrice').value = product.price;
+            document.getElementById('productDescription').value = product.description || '';
+            document.getElementById('productModalTitle').textContent = '编辑产品';
+            openModal('productModal');
+        }
+
+        async function deleteProduct(id) {
+            if (!confirm('确定要删除这个产品吗？')) return;
+            
+            try {
+                await apiRequest(`/products/${id}`, { method: 'DELETE' });
+                showAlert('产品删除成功', 'success');
+                loadProducts();
+                updateDashboardStats();
+            } catch (error) {
+                showAlert('删除失败：' + error.message, 'error');
+            }
+        }
+
+        function resetProductForm() {
+            document.getElementById('productId').value = '';
+            document.getElementById('productName').value = '';
+            document.getElementById('productSku').value = '';
+            document.getElementById('productPrice').value = '';
+            document.getElementById('productDescription').value = '';
+            document.getElementById('productModalTitle').textContent = '新建产品';
+        }
+
+        // 库存管理
+        async function loadInventory() {
+            try {
+                const data = await apiRequest('/inventory');
+                inventoryData = data.data || [];
+                renderInventory(inventoryData);
+            } catch (error) {
+                showAlert('加载库存数据失败：' + error.message, 'error');
+            }
+        }
+
+        function renderInventory(inventory) {
+            const tbody = document.getElementById('inventoryTable');
+            if (!inventory || inventory.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" class="empty-state">暂无库存数据</td></tr>';
+                return;
+            }
+            
+            tbody.innerHTML = inventory.map(item => {
+                const product = productsData.find(p => p.id === item.product_id);
+                const stockClass = item.quantity < 10 ? 'stock-warning' : 'stock-ok';
+                const stockText = item.quantity < 10 ? '库存不足' : '库存充足';
+                
+                return `
+                    <tr>
+                        <td>${item.id}</td>
+                        <td>${item.product_id}</td>
+                        <td>${product ? product.name : '-'}</td>
+                        <td><strong>${item.quantity}</strong></td>
+                        <td>${item.location || '-'}</td>
+                        <td><span class="${stockClass}">${stockText}</span></td>
+                        <td>
+                            <button class="btn btn-sm btn-secondary" onclick="editInventory(${item.id})">编辑</button>
+                            <button class="btn btn-sm btn-danger" onclick="deleteInventory(${item.id})">删除</button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        async function handleInventorySubmit(event) {
+            event.preventDefault();
+            const id = document.getElementById('inventoryId').value;
+            const inventory = {
+                product_id: parseInt(document.getElementById('inventoryProductId').value),
+                quantity: parseInt(document.getElementById('inventoryQuantity').value),
+                location: document.getElementById('inventoryLocation').value
+            };
+            
+            try {
+                if (id) {
+                    await apiRequest(`/inventory/product/${inventory.product_id}`, {
+                        method: 'PUT',
+                        body: JSON.stringify(inventory)
+                    });
+                    showAlert('库存更新成功', 'success');
+                } else {
+                    await apiRequest('/inventory', {
+                        method: 'POST',
+                        body: JSON.stringify(inventory)
+                    });
+                    showAlert('库存添加成功', 'success');
+                }
+                closeModal('inventoryModal');
+                loadInventory();
+                updateDashboardStats();
+            } catch (error) {
+                showAlert('操作失败：' + error.message, 'error');
+            }
+        }
+
+        function editInventory(id) {
+            const inventory = inventoryData.find(i => i.id === id);
+            if (!inventory) return;
+            
+            document.getElementById('inventoryId').value = inventory.id;
+            document.getElementById('inventoryProductId').value = inventory.product_id;
+            document.getElementById('inventoryQuantity').value = inventory.quantity;
+            document.getElementById('inventoryLocation').value = inventory.location || '';
+            document.getElementById('inventoryModalTitle').textContent = '编辑库存';
+            openModal('inventoryModal');
+        }
+
+        async function deleteInventory(id) {
+            if (!confirm('确定要删除这个库存记录吗？')) return;
+            
+            try {
+                // 注意：根据API，可能需要使用 product_id 而不是 id
+                const inventory = inventoryData.find(i => i.id === id);
+                if (inventory) {
+                    await apiRequest(`/inventory/product/${inventory.product_id}`, { method: 'DELETE' });
+                    showAlert('库存删除成功', 'success');
+                    loadInventory();
+                    updateDashboardStats();
+                }
+            } catch (error) {
+                showAlert('删除失败：' + error.message, 'error');
+            }
+        }
+
+        function resetInventoryForm() {
+            document.getElementById('inventoryId').value = '';
+            document.getElementById('inventoryProductId').value = '';
+            document.getElementById('inventoryQuantity').value = '';
+            document.getElementById('inventoryLocation').value = '';
+            document.getElementById('inventoryModalTitle').textContent = '添加库存';
+        }
+
+        // 订单管理
+        async function loadOrders() {
+            try {
+                const data = await apiRequest('/orders');
+                ordersData = data.data || [];
+                renderOrders(ordersData);
+            } catch (error) {
+                showAlert('加载订单数据失败：' + error.message, 'error');
+            }
+        }
+
+        function renderOrders(orders) {
+            const tbody = document.getElementById('ordersTable');
+            if (!orders || orders.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" class="empty-state">暂无订单数据</td></tr>';
+                return;
+            }
+            
+            tbody.innerHTML = orders.map(order => {
+                const statusMap = {
+                    'pending': 'status-pending',
+                    'processing': 'status-processing',
+                    'completed': 'status-completed',
+                    'cancelled': 'status-cancelled'
+                };
+                const statusText = {
+                    'pending': '待处理',
+                    'processing': '处理中',
+                    'completed': '已完成',
+                    'cancelled': '已取消'
+                };
+                
+                return `
+                    <tr>
+                        <td>${order.id}</td>
+                        <td><code>${order.order_number}</code></td>
+                        <td>${order.customer_id}</td>
+                        <td><strong>¥${parseFloat(order.total_amount).toFixed(2)}</strong></td>
+                        <td><span class="status-badge ${statusMap[order.status]}">${statusText[order.status]}</span></td>
+                        <td>${new Date(order.created_at).toLocaleString('zh-CN')}</td>
+                        <td>
+                            <button class="btn btn-sm btn-secondary" onclick="editOrder(${order.id})">编辑</button>
+                            <button class="btn btn-sm btn-danger" onclick="deleteOrder(${order.id})">删除</button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function filterOrders(keyword) {
+            const filtered = ordersData.filter(o => 
+                o.order_number.toLowerCase().includes(keyword.toLowerCase()) ||
+                o.customer_id.toString().includes(keyword)
+            );
+            renderOrders(filtered);
+        }
+
+        async function handleOrderSubmit(event) {
+            event.preventDefault();
+            const id = document.getElementById('orderId').value;
+            const order = {
+                order_number: document.getElementById('orderNumber').value,
+                customer_id: parseInt(document.getElementById('orderCustomerId').value),
+                total_amount: parseFloat(document.getElementById('orderTotalAmount').value),
+                status: document.getElementById('orderStatus').value
+            };
+            
+            try {
+                if (id) {
+                    // 更新订单状态
+                    await apiRequest(`/orders/${id}/status`, {
+                        method: 'PUT',
+                        body: JSON.stringify({ status: order.status })
+                    });
+                    showAlert('订单更新成功', 'success');
+                } else {
+                    await apiRequest('/orders', {
+                        method: 'POST',
+                        body: JSON.stringify(order)
+                    });
+                    showAlert('订单创建成功', 'success');
+                }
+                closeModal('orderModal');
+                loadOrders();
+                updateDashboardStats();
+            } catch (error) {
+                showAlert('操作失败：' + error.message, 'error');
+            }
+        }
+
+        function editOrder(id) {
+            const order = ordersData.find(o => o.id === id);
+            if (!order) return;
+            
+            document.getElementById('orderId').value = order.id;
+            document.getElementById('orderNumber').value = order.order_number;
+            document.getElementById('orderCustomerId').value = order.customer_id;
+            document.getElementById('orderTotalAmount').value = order.total_amount;
+            document.getElementById('orderStatus').value = order.status;
+            document.getElementById('orderModalTitle').textContent = '编辑订单';
+            openModal('orderModal');
+        }
+
+        async function deleteOrder(id) {
+            if (!confirm('确定要删除这个订单吗？')) return;
+            
+            try {
+                await apiRequest(`/orders/${id}`, { method: 'DELETE' });
+                showAlert('订单删除成功', 'success');
+                loadOrders();
+                updateDashboardStats();
+            } catch (error) {
+                showAlert('删除失败：' + error.message, 'error');
+            }
+        }
+
+        function resetOrderForm() {
+            document.getElementById('orderId').value = '';
+            document.getElementById('orderNumber').value = 'ORD' + Date.now();
+            document.getElementById('orderCustomerId').value = '';
+            document.getElementById('orderTotalAmount').value = '';
+            document.getElementById('orderStatus').value = 'pending';
+            document.getElementById('orderModalTitle').textContent = '创建订单';
+        }
+
+        // 仪表盘统计
+        function updateDashboardStats() {
+            document.getElementById('statCustomers').textContent = customersData.length;
+            document.getElementById('statProducts').textContent = productsData.length;
+            document.getElementById('statOrders').textContent = ordersData.length;
+            document.getElementById('statInventory').textContent = inventoryData.length;
+        }
+
+        // 工具函数
+        function showAlert(message, type = 'info') {
+            const alertClass = `alert-${type}`;
+            const alertHtml = `<div class="alert ${alertClass}">${message}</div>`;
+            
+            // 创建临时容器
+            const container = document.createElement('div');
+            container.innerHTML = alertHtml;
+            container.style.position = 'fixed';
+            container.style.top = '20px';
+            container.style.right = '20px';
+            container.style.zIndex = '10000';
+            
+            document.body.appendChild(container);
+            
+            setTimeout(() => {
+                container.remove();
+            }, 3000);
+        }
+
+        function showLoading(textId, loadingId) {
+            document.getElementById(textId).style.display = 'none';
+            document.getElementById(loadingId).style.display = 'inline-block';
+        }
+
+        function hideLoading(textId, loadingId) {
+            document.getElementById(textId).style.display = 'inline';
+            document.getElementById(loadingId).style.display = 'none';
+        }
+
+        // 点击模态框外部关闭
+        document.addEventListener('click', function(event) {
+            if (event.target.classList.contains('modal')) {
+                event.target.classList.remove('active');
+            }
+        });
+    </script>
+</body>
+</html>
