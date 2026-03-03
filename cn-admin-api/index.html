@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>省市区联动查询</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 30px;
+        }
+
+        label {
+            display: block;
+            margin-top: 10px;
+        }
+
+        select {
+            padding: 5px;
+            margin-top: 5px;
+        }
+
+        .container {
+            max-width: 500px;
+            margin: auto;
+        }
+
+        .loading {
+            color: #777;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+        <h1>省市区联动查询</h1>
+
+        <label for="province">选择省：</label>
+        <select id="province">
+            <option value="">请选择省</option>
+        </select>
+
+        <label for="city">选择市：</label>
+        <select id="city" disabled>
+            <option value="">请选择市</option>
+        </select>
+
+        <label for="county">选择区/县：</label>
+        <select id="county" disabled>
+            <option value="">请选择区/县</option>
+        </select>
+
+        <div class="loading" id="loadingMessage"></div>
+    </div>
+
+    <script>
+        const provinceSelect = document.getElementById('province');
+        const citySelect = document.getElementById('city');
+        const countySelect = document.getElementById('county');
+        const loadingMessage = document.getElementById('loadingMessage');
+
+        // 获取省列表并填充省下拉框
+        async function fetchProvinces() {
+            loadingMessage.textContent = '加载省份...';
+            try {
+                const response = await fetch('http://localhost:8080/api/provinces');
+                const provinces = await response.json();
+                provinces.forEach(province => {
+                    const option = document.createElement('option');
+                    option.value = province.code;
+                    option.textContent = province.name;
+                    provinceSelect.appendChild(option);
+                });
+            } catch (error) {
+                loadingMessage.textContent = '加载省份失败。';
+            } finally {
+                loadingMessage.textContent = '';
+            }
+        }
+
+        // 获取市列表并填充市下拉框
+        async function fetchCities(provinceCode) {
+            citySelect.disabled = false;
+            citySelect.innerHTML = '<option value="">请选择市</option>';
+            countySelect.disabled = true;
+            countySelect.innerHTML = '<option value="">请选择区/县</option>';
+            loadingMessage.textContent = '加载城市...';
+            try {
+                const response = await fetch(`http://localhost:8080/api/cities?province_code=${provinceCode}`);
+                const cities = await response.json();
+                cities.forEach(city => {
+                    const option = document.createElement('option');
+                    option.value = city.code;
+                    option.textContent = city.name;
+                    citySelect.appendChild(option);
+                });
+            } catch (error) {
+                loadingMessage.textContent = '加载城市失败。';
+            } finally {
+                loadingMessage.textContent = '';
+            }
+        }
+
+        // 获取区/县列表并填充区/县下拉框
+        async function fetchCounties(cityCode) {
+            countySelect.disabled = false;
+            countySelect.innerHTML = '<option value="">请选择区/县</option>';
+            loadingMessage.textContent = '加载区/县...';
+            try {
+                const response = await fetch(`http://localhost:8080/api/counties?city_code=${cityCode}`);
+                const counties = await response.json();
+                counties.forEach(county => {
+                    const option = document.createElement('option');
+                    option.value = county.code;
+                    option.textContent = county.name;
+                    countySelect.appendChild(option);
+                });
+            } catch (error) {
+                loadingMessage.textContent = '加载区/县失败。';
+            } finally {
+                loadingMessage.textContent = '';
+            }
+        }
+
+        // 初始化省数据
+        fetchProvinces();
+
+        // 省选择事件：加载对应的市
+        provinceSelect.addEventListener('change', (event) => {
+            const provinceCode = event.target.value;
+            if (provinceCode) {
+                fetchCities(provinceCode);
+            } else {
+                citySelect.disabled = true;
+                countySelect.disabled = true;
+            }
+        });
+
+        // 市选择事件：加载对应的区县
+        citySelect.addEventListener('change', (event) => {
+            const cityCode = event.target.value;
+            if (cityCode) {
+                fetchCounties(cityCode);
+            } else {
+                countySelect.disabled = true;
+            }
+        });
+    </script>
+
+</body>
+
+</html>
