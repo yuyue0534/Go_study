@@ -1,0 +1,40 @@
+### Health check
+GET http://127.0.0.1:8080/api/v1/health
+
+### Create student
+POST http://127.0.0.1:8080/api/v1/students
+Content-Type: application/json
+
+{
+  "student_no": "20260001",
+  "name": "Zhang San",
+  "class_id": 1,
+  "phone": "13800000000",
+  "email": "zhangsan@example.com",
+  "address": "Dormitory A-101"
+}
+
+### Query student by number
+GET http://127.0.0.1:8080/api/v1/students/by-no/20260001
+
+### Search students
+GET http://127.0.0.1:8080/api/v1/students?name=Zhang&class_name=Computer&major_name=Science&grade_year=2024&page=1&page_size=20
+
+### Update student
+PUT http://127.0.0.1:8080/api/v1/students/1
+Content-Type: application/json
+
+{
+  "name": "Zhang San Updated",
+  "class_id": 2,
+  "phone": "13900000000",
+  "email": "zhangsan_updated@example.com",
+  "address": "Dormitory B-202",
+  "status": 1
+}
+
+### Soft delete student
+DELETE http://127.0.0.1:8080/api/v1/students/1
+
+### Query inactive students
+GET http://127.0.0.1:8080/api/v1/students?status=0

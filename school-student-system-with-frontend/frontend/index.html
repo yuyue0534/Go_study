@@ -1,0 +1,294 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>学校学生信息系统 - 前端调试页</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="./css/styles.css">
+</head>
+<body>
+  <nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm">
+    <div class="container-fluid px-4">
+      <a class="navbar-brand fw-semibold" href="#">学校学生信息系统</a>
+      <div class="d-flex align-items-center gap-2 text-white small">
+        <span class="status-dot" id="serviceStatusDot"></span>
+        <span id="serviceStatusText">服务未检测</span>
+      </div>
+    </div>
+  </nav>
+
+  <main class="container-fluid px-4 py-4 app-shell">
+    <section class="card border-0 shadow-sm mb-4">
+      <div class="card-body">
+        <div class="row g-3 align-items-end">
+          <div class="col-xl-7 col-lg-8">
+            <label for="apiBaseInput" class="form-label fw-semibold">后端 API 基础地址</label>
+            <input id="apiBaseInput" type="text" class="form-control" value="http://127.0.0.1:8080/api/v1">
+            <div class="form-text">默认匹配当前 Go 服务；修改后会保存在浏览器本地。</div>
+          </div>
+          <div class="col-xl-5 col-lg-4 d-flex flex-wrap gap-2">
+            <button id="saveApiBaseBtn" type="button" class="btn btn-primary">保存地址</button>
+            <button id="healthCheckBtn" type="button" class="btn btn-outline-primary">检测服务</button>
+            <button id="reloadPageBtn" type="button" class="btn btn-outline-secondary">刷新列表</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <div class="row g-4">
+      <div class="col-xxl-9 col-xl-8">
+        <section class="card border-0 shadow-sm mb-4">
+          <div class="card-header bg-white border-0 pt-4 px-4 pb-0 d-flex justify-content-between align-items-start flex-wrap gap-3">
+            <div>
+              <h2 class="h5 mb-1">学生档案检索</h2>
+              <p class="text-secondary mb-0">支持学号精确查询、姓名/班级/专业模糊搜索与多条件组合筛选。</p>
+            </div>
+            <button id="openCreateModalBtn" type="button" class="btn btn-success">新增学生</button>
+          </div>
+          <div class="card-body p-4">
+            <form id="filterForm" class="row g-3">
+              <div class="col-xl-3 col-md-4">
+                <label class="form-label" for="filterStudentNo">学号</label>
+                <input id="filterStudentNo" class="form-control" placeholder="精确匹配">
+              </div>
+              <div class="col-xl-3 col-md-4">
+                <label class="form-label" for="filterName">姓名</label>
+                <input id="filterName" class="form-control" placeholder="模糊搜索">
+              </div>
+              <div class="col-xl-3 col-md-4">
+                <label class="form-label" for="filterClassName">班级名称</label>
+                <input id="filterClassName" class="form-control" placeholder="模糊搜索">
+              </div>
+              <div class="col-xl-3 col-md-4">
+                <label class="form-label" for="filterMajorName">专业名称</label>
+                <input id="filterMajorName" class="form-control" placeholder="模糊搜索">
+              </div>
+              <div class="col-xl-2 col-md-4">
+                <label class="form-label" for="filterGradeYear">年级</label>
+                <input id="filterGradeYear" type="number" min="0" class="form-control" placeholder="2024">
+              </div>
+              <div class="col-xl-2 col-md-4">
+                <label class="form-label" for="filterClassId">班级 ID</label>
+                <input id="filterClassId" type="number" min="0" class="form-control" placeholder="1">
+              </div>
+              <div class="col-xl-2 col-md-4">
+                <label class="form-label" for="filterMajorId">专业 ID</label>
+                <input id="filterMajorId" type="number" min="0" class="form-control" placeholder="1">
+              </div>
+              <div class="col-xl-2 col-md-4">
+                <label class="form-label" for="filterStatus">学生状态</label>
+                <select id="filterStatus" class="form-select">
+                  <option value="">默认在读</option>
+                  <option value="1">在读 / 有效</option>
+                  <option value="0">停用 / 已删除</option>
+                </select>
+              </div>
+              <div class="col-xl-2 col-md-4">
+                <label class="form-label" for="pageSizeSelect">每页条数</label>
+                <select id="pageSizeSelect" class="form-select">
+                  <option value="10">10</option>
+                  <option value="20" selected>20</option>
+                  <option value="50">50</option>
+                  <option value="100">100</option>
+                </select>
+              </div>
+              <div class="col-xl-2 col-md-4 d-flex align-items-end gap-2">
+                <button type="submit" class="btn btn-primary w-100">查询</button>
+                <button id="resetFilterBtn" type="button" class="btn btn-outline-secondary w-100">重置</button>
+              </div>
+            </form>
+          </div>
+        </section>
+
+        <section class="card border-0 shadow-sm">
+          <div class="card-header bg-white border-0 px-4 pt-4 pb-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <div>
+              <h2 class="h5 mb-1">学生列表</h2>
+              <div id="tableSummary" class="text-secondary small">尚未加载数据</div>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+              <span class="badge text-bg-primary-subtle border border-primary-subtle text-primary-emphasis" id="currentQueryBadge">默认在读学生</span>
+            </div>
+          </div>
+          <div class="card-body px-4 pb-4 pt-0">
+            <div class="table-responsive student-table-wrap">
+              <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                  <tr>
+                    <th>ID</th>
+                    <th>学号</th>
+                    <th>姓名</th>
+                    <th>专业 / 班级</th>
+                    <th>年级</th>
+                    <th>联系方式</th>
+                    <th>状态</th>
+                    <th>更新时间</th>
+                    <th class="text-end">操作</th>
+                  </tr>
+                </thead>
+                <tbody id="studentTableBody">
+                  <tr>
+                    <td colspan="9" class="text-center text-secondary py-5">等待加载学生数据</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mt-4">
+              <div id="paginationText" class="text-secondary small">第 1 页</div>
+              <nav aria-label="学生列表分页">
+                <ul id="paginationList" class="pagination mb-0"></ul>
+              </nav>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <div class="col-xxl-3 col-xl-4">
+        <section class="card border-0 shadow-sm mb-4">
+          <div class="card-body p-4">
+            <h2 class="h5 mb-3">学号快速定位</h2>
+            <div class="input-group">
+              <input id="quickStudentNoInput" class="form-control" placeholder="输入完整学号">
+              <button id="quickStudentNoBtn" class="btn btn-outline-primary" type="button">查询</button>
+            </div>
+            <p class="text-secondary small mb-0 mt-3">直接调用 <code>/students/by-no/:student_no</code>。</p>
+          </div>
+        </section>
+
+        <section class="card border-0 shadow-sm mb-4">
+          <div class="card-body p-4">
+            <h2 class="h5 mb-3">当前数据库种子提示</h2>
+            <div class="small text-secondary mb-3">系统第一阶段已内置以下班级，可直接用于新增学生：</div>
+            <div class="seed-list">
+              <div class="seed-item"><strong>1</strong><span>Computer Science Class 1</span></div>
+              <div class="seed-item"><strong>2</strong><span>Smart Agriculture Class 1</span></div>
+              <div class="seed-item"><strong>3</strong><span>Management Class 1</span></div>
+            </div>
+            <div class="alert alert-light border small mb-0 mt-3">当前后端还未实现专业/班级字典接口，因此新增和编辑时使用 <strong>class_id</strong> 输入。</div>
+          </div>
+        </section>
+
+        <section class="card border-0 shadow-sm">
+          <div class="card-body p-4">
+            <div class="d-flex justify-content-between align-items-center gap-2 mb-3">
+              <h2 class="h5 mb-0">最近接口反馈</h2>
+              <button id="clearLogBtn" class="btn btn-sm btn-outline-secondary" type="button">清空</button>
+            </div>
+            <div id="requestMeta" class="request-meta text-secondary small mb-2">暂无请求</div>
+            <pre id="responsePreview" class="response-preview mb-0">等待接口调用...</pre>
+          </div>
+        </section>
+      </div>
+    </div>
+  </main>
+
+  <div class="modal fade" id="studentFormModal" tabindex="-1" aria-labelledby="studentFormModalTitle" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+      <div class="modal-content border-0 shadow">
+        <div class="modal-header">
+          <h2 class="modal-title fs-5" id="studentFormModalTitle">新增学生</h2>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="关闭"></button>
+        </div>
+        <form id="studentForm">
+          <div class="modal-body">
+            <input id="editingStudentId" type="hidden">
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label class="form-label" for="formStudentNo">学号 <span class="text-danger">*</span></label>
+                <input id="formStudentNo" class="form-control" maxlength="32" required placeholder="例如 20260001">
+              </div>
+              <div class="col-md-6">
+                <label class="form-label" for="formName">姓名 <span class="text-danger">*</span></label>
+                <input id="formName" class="form-control" maxlength="64" required placeholder="例如 张三">
+              </div>
+              <div class="col-md-6">
+                <label class="form-label" for="formClassId">班级 ID <span class="text-danger">*</span></label>
+                <input id="formClassId" type="number" min="1" class="form-control" list="classIdOptions" required placeholder="1">
+                <datalist id="classIdOptions">
+                  <option value="1">Computer Science Class 1</option>
+                  <option value="2">Smart Agriculture Class 1</option>
+                  <option value="3">Management Class 1</option>
+                </datalist>
+              </div>
+              <div class="col-md-6" id="formStatusGroup">
+                <label class="form-label" for="formStatus">状态</label>
+                <select id="formStatus" class="form-select">
+                  <option value="1">在读 / 有效</option>
+                  <option value="0">停用 / 已删除</option>
+                </select>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label" for="formPhone">联系电话</label>
+                <input id="formPhone" class="form-control" maxlength="32" placeholder="可选">
+              </div>
+              <div class="col-md-6">
+                <label class="form-label" for="formEmail">邮箱</label>
+                <input id="formEmail" type="email" class="form-control" maxlength="128" placeholder="可选">
+              </div>
+              <div class="col-12">
+                <label class="form-label" for="formAddress">地址</label>
+                <textarea id="formAddress" class="form-control" maxlength="255" rows="3" placeholder="可选"></textarea>
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">取消</button>
+            <button id="submitStudentFormBtn" type="submit" class="btn btn-primary">保存</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal fade" id="studentDetailModal" tabindex="-1" aria-labelledby="studentDetailModalTitle" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+      <div class="modal-content border-0 shadow">
+        <div class="modal-header">
+          <h2 class="modal-title fs-5" id="studentDetailModalTitle">学生详情</h2>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="关闭"></button>
+        </div>
+        <div class="modal-body">
+          <div id="studentDetailContent" class="detail-grid"></div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">关闭</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal fade" id="deleteConfirmModal" tabindex="-1" aria-labelledby="deleteConfirmModalTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content border-0 shadow">
+        <div class="modal-header">
+          <h2 class="modal-title fs-5" id="deleteConfirmModalTitle">确认停用学生</h2>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="关闭"></button>
+        </div>
+        <div class="modal-body">
+          <p class="mb-2">本操作会调用删除接口，将学生状态设置为 <strong>0</strong>。</p>
+          <div id="deleteTargetText" class="alert alert-warning mb-0"></div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">取消</button>
+          <button id="confirmDeleteBtn" type="button" class="btn btn-danger">确认停用</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast-container position-fixed top-0 end-0 p-3">
+    <div id="appToast" class="toast border-0 shadow" role="alert" aria-live="assertive" aria-atomic="true">
+      <div class="toast-header">
+        <strong id="toastTitle" class="me-auto">提示</strong>
+        <small id="toastTime">刚刚</small>
+        <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="关闭"></button>
+      </div>
+      <div id="toastBody" class="toast-body"></div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="./js/app.js"></script>
+</body>
+</html>
